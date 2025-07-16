@@ -2,6 +2,9 @@ from Graph_Node_ABC import *
 from openevolve_graph.Graph.Graph_Node_ABC import NodeType
 from openevolve_graph.Graph.Graph_state import GraphState 
 from openevolve_graph.Config import Config
+from openevolve_graph.utils.utils import safe_numeric_average 
+from openevolve_graph.utils.utils import _calculate_feature_coords,_feature_coords_to_key
+
 
 class node_sample_parent(SyncNode): 
     '''
@@ -155,11 +158,162 @@ class node_sample_inspiration(SyncNode):
     '''
     采样灵感程序
     '''
-    def __init__(self,config:Config,island_id:str):
+    def __init__(self,config:Config,island_id:str,n:int,metric:Optional[str] = None):
         self.config = config 
         self.island_id = island_id 
+        self.n = n 
+        self.metric = metric 
+    def execute(self,state:GraphState):
+        return self._sample_parent(state) 
+    
+    def get_node_type(self) -> NodeType:
+        return super().get_node_type()
+    def validate_input(self, state: GraphState) -> bool:
+        return super().validate_input(state)
+    def handle_error(self, error: Exception, state: GraphState) -> NodeResult:
+        return super().handle_error(error, state)
+    
+    def __call__(self, state: GraphState, config: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        LangGraph节点调用接口 - 线程安全版本
+        只返回需要更新的字段，不直接修改state对象
+        """
+        # 执行采样逻辑
+        program_id: str = self.execute(state).id
         
+        # 只返回需要更新的字段，让LangGraph的reducer处理并发
+        return {
+            "sample_program_id": {self.island_id: program_id}
+        }
+    
+    def get_node_info(self) -> Dict[str, Any]:
+        return super().get_node_info()
+    
+    def get_top_programs(self, state:GraphState, n: int = 10) -> List[Program]:
+        """
+        获取前N个最优程序 从all_programs中  以metric为指标排序
         
+        Args:
+            n: 返回的程序数量
+            metric: 用于排序的指标名称（可选，默认使用平均值）
+            
+        Returns:
+            List[Program]: 前N个最优程序列表
+        """
+        if not state.all_programs:
+            return []
+
+        if self.metric:
+            # 按指定指标排序
+            sorted_programs = sorted(
+                [p for p in state.all_programs.values() if self.metric in p.metrics],
+                key=lambda p: p.metrics[self.metric],
+                reverse=True,
+            )
+        else:
+            # 按所有数值指标的平均值排序
+            sorted_programs = sorted(
+                state.all_programs.values(),
+                key=lambda p: safe_numeric_average(p.metrics),
+                reverse=True,
+            )
+
+        return sorted_programs[:n]
+    def _sample_inspirations(self,state:GraphState):
+        ''' 
+        采样灵感程序
+        
+        采样灵感程序用于下一轮进化
+        
+        灵感程序用于指导进化过程，包括：
+        1. 绝对最优程序（如果与父代不同）
+        2. 顶级程序（按精英选择比例）
+        3. 多样性程序（从附近特征格子采样）
+        4. 随机程序（填充剩余位置）
+        
+        Args:
+            parent: 父代程序
+            n: 灵感程序数量
+            
+        Returns:
+            List[Program]: 灵感程序列表
+        
+        '''
+        inspirations = [] 
+        parent_id = state.sample_program_id[self.island_id]
+        
+        #若最优程序存在 且与父代不同 且在所有的程序中 则加入灵感程序
+        if (
+            state.best_program_id is not None
+            and state.best_program_id != parent_id
+            and state.best_program_id in state.all_programs
+        ):
+            
+            inspirations.append(state.best_program_id)
+            logger.debug(f"Including best program {state.best_program_id} in inspirations")
+        
+        # 添加顶级程序作为灵感
+        top_n = max(1, int(self.n * self.config.island.elite_selection_ratio))
+        top_programs = self.get_top_programs(state,n=top_n)
+        for program in top_programs:
+            if program.id not in [p.id for p in inspirations] and program.id != parent_id:
+                inspirations.append(program)
+                
+        
+        # 添加多样性程序
+        if len(state.all_programs) > self.n and len(inspirations) < self.n:
+            # 计算要添加的多样性程序数量（最多到剩余位置）
+            remaining_slots = self.n - len(inspirations)
+
+            # 从不同的特征格子采样以获得多样性
+            feature_coords = _calculate_feature_coords(self.config,state,state.all_programs[parent_id])
+
+            # 从附近的特征格子获取程序
+            nearby_programs = []
+            for _ in range(remaining_slots):
+                # 扰动坐标
+                perturbed_coords = [
+                    max(0, min(self.config.island.feature_bins - 1, c + random.randint(-1, 1)))
+                    for c in feature_coords
+                ]
+
+                # 尝试从这个格子获取程序
+                cell_key = _feature_coords_to_key(perturbed_coords)
+                if cell_key in state.feature_map:
+                    program_id = state.feature_map[cell_key]
+                    # 在添加前检查程序是否仍然存在
+                    if (
+                        program_id != parent.id
+                        and program_id not in [p.id for p in inspirations]
+                        and program_id in self.programs
+                    ):
+                        nearby_programs.append(self.programs[program_id])
+                    elif program_id not in self.programs:
+                        # 清理特征网格中的过时引用
+                        logger.debug(f"Removing stale program {program_id} from feature_map")
+                        del self.feature_map[cell_key]
+
+            # 如果需要更多，添加随机程序
+            if len(inspirations) + len(nearby_programs) < n:
+                remaining = n - len(inspirations) - len(nearby_programs)
+                all_ids = set(self.programs.keys())
+                excluded_ids = (
+                    {parent.id}
+                    .union(p.id for p in inspirations)
+                    .union(p.id for p in nearby_programs)
+                )
+                available_ids = list(all_ids - excluded_ids)
+
+                if available_ids:
+                    random_ids = random.sample(available_ids, min(remaining, len(available_ids)))
+                    random_programs = [self.programs[pid] for pid in random_ids]
+                    nearby_programs.extend(random_programs)
+
+            inspirations.extend(nearby_programs)
+
+        return inspirations[:n]
+
+
         
         
     

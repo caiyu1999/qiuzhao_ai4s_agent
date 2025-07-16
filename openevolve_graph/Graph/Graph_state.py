@@ -82,10 +82,10 @@ class GraphState(BaseModel):
     
     #岛屿内部进化有关:
     sample_program_id: Annotated[Dict[str,str], merge_dicts] = Field(default_factory=dict) # 各个岛屿上采样的程序id 岛屿内部更新 安全 e.g. {"island_id":"program_id"}
+    sample_inspirations: Annotated[Dict[str,List[str]], merge_dicts] = Field(default_factory=dict) # 各个岛屿上采样的程序的灵感 岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
     
     
-    
-    
+    feature_map: 
     
     
     
@@ -185,9 +185,9 @@ def init_graph_state(config:Config)->GraphState:
 if __name__ == "__main__":
     config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
     graph_state = init_graph_state(config)
-    for key,value in graph_state.model_dump().items():
-        print(key)
-        print(value)
+    # print(graph_state.all_programs)
+    all_programs = graph_state.all_programs
+    print(len(all_programs))
     
     
         
