@@ -34,3 +34,6 @@ class IslandConfig:
     artifact_size_threshold: int = 32 * 1024  # 32KB threshold
     cleanup_old_artifacts: bool = True
     artifact_retention_days: int = 30
+    
+    evolution_direction:List[str] = field(default_factory=list) # 岛屿的进化方向 安全 e.g. ["evolution_direction1","evolution_direction2"]
+    time_of_meeting:int = 10 # 每当各个岛屿迭代了time_of_meeting次 就会进行一次交流会 安全

@@ -27,14 +27,15 @@ class Config:
     max_iterations: int = 10000
     checkpoint_interval: int = 100
     log_level: str = "INFO"
-    log_dir: Optional[str] = None
+    log_dir: str = ""
     diff_based_evolution: bool = True
     allow_full_rewrites: bool = False
     random_seed: Optional[int] = 42
     max_code_length: int = 20000
-    checkpoint_path: Optional[str] = None
-    init_program_path: Optional[str] = None
-    evalutor_file_path: Optional[str] = None
+    checkpoint_path: str = ""
+    init_program_path: str = ""
+    evalutor_file_path: str = ""
+    output_dir: str = ""
     
 
     @classmethod
@@ -117,6 +118,7 @@ class Config:
             "checkpoint_path": self.checkpoint_path,
             "init_program_path": self.init_program_path,
             "evalutor_file_path": self.evalutor_file_path,
+            "output_dir": self.output_dir,
             # Component configurations
             "llm": {
                 "models": [
@@ -181,6 +183,8 @@ class Config:
                 "migration_interval": self.island.migration_interval,
                 "migration_rate": self.island.migration_rate,
                 "random_seed": self.island.random_seed,
+                "evolution_direction": self.island.evolution_direction,
+                "time_of_meeting": self.island.time_of_meeting,
             },
             "evaluator": {
                 "timeout": self.evaluator.timeout,

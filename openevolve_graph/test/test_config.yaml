@@ -160,5 +160,6 @@ allow_full_rewrites: false    # Allow full rewrites for constructor functions
 random_seed: 42 
 max_code_length: 20000
 checkpoint_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/checkpoints"
-init_program_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py"
-evalutor_file_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py"
+init_program_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py"
+evalutor_file_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py"
+output_dir: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/output"
