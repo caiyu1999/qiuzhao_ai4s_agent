@@ -164,7 +164,7 @@ class node_sample_inspiration(SyncNode):
         self.n = n 
         self.metric = metric 
     def execute(self,state:GraphState):
-        return self._sample_parent(state) 
+        return self._sample_inspirations(state) 
     
     def get_node_type(self) -> NodeType:
         return super().get_node_type()
@@ -179,11 +179,11 @@ class node_sample_inspiration(SyncNode):
         只返回需要更新的字段，不直接修改state对象
         """
         # 执行采样逻辑
-        program_id: str = self.execute(state).id
-        
+        inspirations = self.execute(state)
+        program_ids = [program.id for program in inspirations]
         # 只返回需要更新的字段，让LangGraph的reducer处理并发
         return {
-            "sample_program_id": {self.island_id: program_id}
+            "sample_inspirations": {self.island_id: program_ids}
         }
     
     def get_node_info(self) -> Dict[str, Any]:
@@ -283,22 +283,22 @@ class node_sample_inspiration(SyncNode):
                     program_id = state.feature_map[cell_key]
                     # 在添加前检查程序是否仍然存在
                     if (
-                        program_id != parent.id
+                        program_id != parent_id
                         and program_id not in [p.id for p in inspirations]
-                        and program_id in self.programs
+                        and program_id in state.all_programs
                     ):
-                        nearby_programs.append(self.programs[program_id])
-                    elif program_id not in self.programs:
+                        nearby_programs.append(state.all_programs[program_id])
+                    elif program_id not in state.all_programs:
                         # 清理特征网格中的过时引用
                         logger.debug(f"Removing stale program {program_id} from feature_map")
-                        del self.feature_map[cell_key]
+                        del state.feature_map[cell_key]
 
             # 如果需要更多，添加随机程序
-            if len(inspirations) + len(nearby_programs) < n:
-                remaining = n - len(inspirations) - len(nearby_programs)
-                all_ids = set(self.programs.keys())
+            if len(inspirations) + len(nearby_programs) < self.n:
+                remaining = self.n - len(inspirations) - len(nearby_programs)
+                all_ids = set(state.all_programs.keys())
                 excluded_ids = (
-                    {parent.id}
+                    {parent_id}
                     .union(p.id for p in inspirations)
                     .union(p.id for p in nearby_programs)
                 )
@@ -306,12 +306,12 @@ class node_sample_inspiration(SyncNode):
 
                 if available_ids:
                     random_ids = random.sample(available_ids, min(remaining, len(available_ids)))
-                    random_programs = [self.programs[pid] for pid in random_ids]
+                    random_programs = [state.all_programs[pid] for pid in random_ids]
                     nearby_programs.extend(random_programs)
 
             inspirations.extend(nearby_programs)
 
-        return inspirations[:n]
+        return inspirations[:self.n]
 
 
         
@@ -331,18 +331,29 @@ if __name__ == "__main__":
     node_sample_parent_2 = node_sample_parent(config=config,island_id=graph_state.islands_id[1])
     node_sample_parent_3 = node_sample_parent(config=config,island_id=graph_state.islands_id[2])
     node_sample_parent_4 = node_sample_parent(config=config,island_id=graph_state.islands_id[3])
-    
+    node_sample_inspiration_1 = node_sample_inspiration(config=config,island_id=graph_state.islands_id[0],n=10)
+    node_sample_inspiration_2 = node_sample_inspiration(config=config,island_id=graph_state.islands_id[1],n=10)
+    node_sample_inspiration_3 = node_sample_inspiration(config=config,island_id=graph_state.islands_id[2],n=10)
+    node_sample_inspiration_4 = node_sample_inspiration(config=config,island_id=graph_state.islands_id[3],n=10)
     
     builder = StateGraph(GraphState)
     builder.add_node("node_sample_parent_1",node_sample_parent_1)
     builder.add_node("node_sample_parent_2",node_sample_parent_2)
     builder.add_node("node_sample_parent_3",node_sample_parent_3)
     builder.add_node("node_sample_parent_4",node_sample_parent_4)
+    builder.add_node("node_sample_inspiration_1",node_sample_inspiration_1)
+    builder.add_node("node_sample_inspiration_2",node_sample_inspiration_2)
+    builder.add_node("node_sample_inspiration_3",node_sample_inspiration_3)
+    builder.add_node("node_sample_inspiration_4",node_sample_inspiration_4)
     builder.add_node("wait_node",wait_node,defer=True)
     builder.add_edge(START,"node_sample_parent_1")
     builder.add_edge(START,"node_sample_parent_2")
     builder.add_edge(START,"node_sample_parent_3")
     builder.add_edge(START,"node_sample_parent_4")
+    builder.add_edge("node_sample_parent_1","node_sample_inspiration_1")
+    builder.add_edge("node_sample_parent_2","node_sample_inspiration_2")
+    builder.add_edge("node_sample_parent_3","node_sample_inspiration_3")
+    builder.add_edge("node_sample_parent_4","node_sample_inspiration_4")
     builder.add_edge("node_sample_parent_1","wait_node")
     builder.add_edge("node_sample_parent_2","wait_node")
     builder.add_edge("node_sample_parent_3","wait_node")

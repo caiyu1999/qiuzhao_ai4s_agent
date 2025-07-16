@@ -6,8 +6,7 @@ from typing import Dict, Any, List, Optional, Union, Callable
 from abc import ABC, abstractmethod
 from enum import Enum
 from openevolve_graph.Config import Config
-from Graph_state import GraphState
-# from openevolve_graph.program import _sample_exploration_parent, _sample_exploitation_parent, _sample_random_parent
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,7 @@ class BaseNode(ABC):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
     @abstractmethod
-    def execute(self, state: GraphState) -> Union[NodeResult, Dict[str, Any]]:
+    def execute(self, state: BaseModel) -> Union[NodeResult, Dict[str, Any]]:
         """
         执行节点的核心逻辑
         
@@ -95,7 +94,7 @@ class BaseNode(ABC):
         """返回节点类型"""
         pass
     
-    def validate_input(self, state: GraphState) -> bool:
+    def validate_input(self, state: BaseModel) -> bool:
         """
         验证输入状态是否满足节点执行条件
         
@@ -107,7 +106,7 @@ class BaseNode(ABC):
         """
         return True
     
-    def handle_error(self, error: Exception, state: GraphState) -> NodeResult:
+    def handle_error(self, error: Exception, state: BaseModel) -> NodeResult:
         """
         统一的错误处理
         
@@ -121,7 +120,7 @@ class BaseNode(ABC):
         self.logger.error(f"Node {self.name} error: {error}")
         return NodeResult(error=error, metadata={"error_type": type(error).__name__})
     
-    def __call__(self, state: GraphState, config: Optional[Any] = None) -> Dict[str, Any]:
+    def __call__(self, state: BaseModel, config: Optional[Any] = None) -> Dict[str, Any]:
         """
         LangGraph 节点调用接口
         
@@ -191,11 +190,11 @@ class AsyncNode(BaseNode):
         return NodeType.ASYNC
     
     @abstractmethod
-    async def execute_async(self, state: GraphState) -> Union[NodeResult, Dict[str, Any]]:
+    async def execute_async(self, state: BaseModel) -> Union[NodeResult, Dict[str, Any]]:
         """异步执行方法"""
         pass
     
-    def execute(self, state: GraphState) -> Union[NodeResult, Dict[str, Any]]:
+    def execute(self, state: BaseModel) -> Union[NodeResult, Dict[str, Any]]:
         """同步包装器，调用异步方法"""
         return asyncio.run(self.execute_async(state))
 
@@ -206,7 +205,7 @@ class ConditionalNode(BaseNode):
         return NodeType.CONDITIONAL
     
     @abstractmethod
-    def evaluate_condition(self, state: GraphState) -> str:
+    def evaluate_condition(self, state: BaseModel) -> str:
         """
         评估条件，返回下一个节点的名称
         
@@ -218,7 +217,7 @@ class ConditionalNode(BaseNode):
         """
         pass
     
-    def execute(self, state: GraphState) -> Union[NodeResult, Dict[str, Any]]:
+    def execute(self, state: BaseModel) -> Union[NodeResult, Dict[str, Any]]:
         """条件节点只做路由，不修改状态"""
         next_node = self.evaluate_condition(state)
         return NodeResult(next_nodes=[next_node])
@@ -230,7 +229,7 @@ class ParallelNode(BaseNode):
         return NodeType.PARALLEL
     
     @abstractmethod
-    def get_parallel_tasks(self, state: GraphState) -> List[str]:
+    def get_parallel_tasks(self, state: BaseModel) -> List[str]:
         """
         获取需要并行执行的任务列表
         
@@ -242,7 +241,7 @@ class ParallelNode(BaseNode):
         """
         pass
     
-    def execute(self, state: GraphState) -> Union[NodeResult, Dict[str, Any]]:
+    def execute(self, state: BaseModel) -> Union[NodeResult, Dict[str, Any]]:
         """并行节点返回需要并行执行的任务"""
         parallel_tasks = self.get_parallel_tasks(state)
         return NodeResult(next_nodes=parallel_tasks)
@@ -251,6 +250,6 @@ class ParallelNode(BaseNode):
 
 if __name__ == "__main__":
     from langgraph.graph import StateGraph, START, END
-    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
+    config = Config.from_yaml("./openevolve_graph/test/test_config.yaml")
     # node_sync = SyncNode("sync_node",config)
     

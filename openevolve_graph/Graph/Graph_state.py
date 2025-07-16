@@ -85,7 +85,7 @@ class GraphState(BaseModel):
     sample_inspirations: Annotated[Dict[str,List[str]], merge_dicts] = Field(default_factory=dict) # 各个岛屿上采样的程序的灵感 岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
     
     
-    feature_map: 
+    feature_map: Annotated[Dict[str,Any], merge_dicts] = Field(default_factory=dict) # 各个岛屿上的特征 岛屿内部更新 安全 e.g. {"island_id":{"feature_name":feature_value}}
     
     
     

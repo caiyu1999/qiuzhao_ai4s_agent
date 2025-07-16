@@ -4,8 +4,8 @@ from typing import Dict,Any
 from openevolve_graph.program import Program 
 from typing import List 
 from openevolve_graph.Config.config import Config 
-from openevolve_graph.Graph.Graph_state import GraphState 
 from random import random 
+from pydantic import BaseModel
 
 def load_initial_program(path:str)->str:
     # 检查文件是否存在
@@ -55,7 +55,7 @@ def _feature_coords_to_key(coords: List[int]) -> str:
     return "-".join(str(c) for c in coords)
 
 
-def _calculate_feature_coords(config:Config,state:GraphState,program: Program) -> List[int]:
+def _calculate_feature_coords(config:Config,state:BaseModel,program: Program) -> List[int]:
     """
     计算程序在MAP-Elites特征网格中的坐标
     
