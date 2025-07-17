@@ -1,11 +1,12 @@
 from dataclasses import asdict, dataclass, field, fields
-import time
+import logging
+import time 
 from typing import Dict, Any, Optional#, List, Union, Tuple, Set, FrozenSet, Iterable, Iterator, Generator, Callable, TypeVar, Generic, AnyStr, AnyPath, AnyPathType, AnyPathTypeVar, AnyPathTypeVarTuple, AnyPathTypeVarTupleVar, AnyPathTypeVarTupleVarTuple, AnyPathTypeVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTuple, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVarTupleVar, AnyPathTypeVarTupleVarTupleVar
 # from openevolve_graph.Graph.Graph_state import GraphState
 # from openevolve_graph.Config import Config
 
 
-
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Program:
@@ -51,6 +52,26 @@ class Program:
         return asdict(self)
     
     
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Program":
+        """Create from dictionary representation"""
+        # Get the valid field names for the Program dataclass
+        valid_fields = {f.name for f in fields(cls)}
+
+        # Filter the data to only include valid fields
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+
+        # Log if we're filtering out any fields
+        if len(filtered_data) != len(data):
+            filtered_out = set(data.keys()) - set(filtered_data.keys())
+            logger.debug(f"Filtered out unsupported fields when loading Program: {filtered_out}")
+
+        return cls(**filtered_data)
+    
+if __name__ == "__main__":
+    program = Program(id="1",code="print('Hello, World!')")
+    print(program.to_dict().get("code",""))
+    # print(program.get("id",""))
 
 # async def _sample_exploration_parent(State:GraphState,config:Config) -> Program:
 #     """

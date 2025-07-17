@@ -36,6 +36,7 @@ class Config:
     init_program_path: str = ""
     evalutor_file_path: str = ""
     output_dir: str = ""
+    template_dir: str = ""
     
 
     @classmethod
@@ -119,6 +120,7 @@ class Config:
             "init_program_path": self.init_program_path,
             "evalutor_file_path": self.evalutor_file_path,
             "output_dir": self.output_dir,
+            "template_dir": self.template_dir,
             # Component configurations
             "llm": {
                 "models": [
@@ -215,6 +217,8 @@ class Config:
         with open(path, "w") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False)
 
+    def copy(self)->"Config":
+        return Config(**self.to_dict())
 
 def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
     """Load configuration from a YAML file or use defaults"""
