@@ -100,6 +100,7 @@ class PromptSampler_langchain:
         # print(f"user_template_key: {user_template_key}")
         # 获取模板
         user_template = self.template_manager.get_template(user_template_key)
+        print("user_template","\n",user_template)
         # 如果设置了系统模板覆盖，则使用它
         if self.system_template_override:
             print(f"system_template_override: {self.system_template_override}")
@@ -670,3 +671,15 @@ class PromptSampler_langchain:
             filtered = re.sub(pattern, replacement, filtered, flags=re.IGNORECASE)
 
         return filtered
+    
+    
+if __name__ == "__main__":
+    from openevolve_graph.Config.config import Config
+    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
+    sampler = PromptSampler_langchain(config.prompt)
+    test_code ='''
+    def add(a,b):
+        return a+b
+    '''
+    prompt = sampler.build_prompt(current_program=test_code,template_key="evaluation")
+    print("prompt","\n",prompt)

@@ -34,7 +34,7 @@ class ThreadSafePrograms:
         with self._lock():
             return len(self._programs)
 
-    def get(self,key:str)->Program:
+    def get(self,key:str)->Optional[Program | None | Any]:
         return self.get_program(key)
     # 实现基类的抽象方法
     def _internal_add(self, key: str, value: Program) -> None:
@@ -47,10 +47,8 @@ class ThreadSafePrograms:
         with self._lock():
             return self._programs.pop(key, None)
     
-    def _internal_get(self, key: str) -> Optional[Program]:
+    def _internal_get(self, key: str) -> Optional[Program | None | Any]:
         """内部获取程序方法"""
-        if key is None:
-            return None
         with self._lock():
             if key not in self._programs:
                 raise ValueError(f"Program with ID {key} not found")
@@ -92,10 +90,11 @@ class ThreadSafePrograms:
         with self._lock():
             self._programs.update(items)
     
-    def _internal_copy(self) -> Dict[str, Program]:
+    def _internal_copy(self) -> "ThreadSafePrograms":
         """内部复制方法"""
         with self._lock():
-            return self._programs.copy()
+            #将当前的程序字典复制 并返回新的线程安全程序容器
+            return ThreadSafePrograms(self._programs.copy())
     
     # 程序特定的便利方法
     def add_program(self, program_id: str, program: Program) -> None:
@@ -117,19 +116,28 @@ class ThreadSafePrograms:
         """批量更新程序（基类 update 方法的别名）"""
         with self._lock():
             self._internal_update(programs)
-    
-    def get_all_programs(self) -> Dict[str, Program]:
-        """获取所有程序（基类 copy 方法的别名）"""
+    def update_program(self, program_id: str, program: Program) -> None:
+        """更新程序（基类 update 方法的别名）"""
         with self._lock():
-            return self._internal_copy()
+            self._internal_update({program_id:program})
     
+    def get_all_programs(self) -> Dict[str, Program | None | Any]:
+        """获取所有程序（基类 copy 方法的别名） 并存放在一个字典中"""
+        with self._lock():
+            return {id:self._internal_get(id) for id in self._internal_keys()}
     def get_program_ids(self) -> List[str]:
         """获取所有程序ID（基类 keys 方法的别名）"""
         with self._lock():  
             return self._internal_keys()
-    
-    def get_programs_by_ids(self, program_ids: List[str]) -> Dict[str, Program]:
-        """根据ID列表获取程序（基类 batch_get 方法的别名）"""
+        
+    def values(self) -> List[Program]:
+        """获取所有程序（基类 values 方法的别名）"""
         with self._lock():
-            return {id: self._internal_get(id) for id in program_ids}
+            return self._internal_values()
+    def copy(self) -> "ThreadSafePrograms":
+        """复制程序容器"""
+        with self._lock():
+            return self._internal_copy()
+    
+
     

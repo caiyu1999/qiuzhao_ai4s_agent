@@ -30,6 +30,7 @@ class Config:
     log_dir: str = ""
     diff_based_evolution: bool = True
     allow_full_rewrites: bool = False
+    enable_artifacts: bool = True
     random_seed: Optional[int] = 42
     max_code_length: int = 20000
     checkpoint_path: str = ""
@@ -37,7 +38,17 @@ class Config:
     evalutor_file_path: str = ""
     output_dir: str = ""
     template_dir: str = ""
+    # 工件存储
+    artifacts_base_path: Optional[str] = None  # Defaults to db_path/artifacts
+    artifact_size_threshold: int = 32 * 1024  # 32KB threshold
+    cleanup_old_artifacts: bool = True
+    artifact_retention_days: int = 30
     
+    
+    # General settings
+    programs_save_path: Optional[str] = None  # Path to store programs on disk
+    in_memory: bool = True
+
 
     @classmethod
     def from_yaml(cls, path: Union[str, Path]) -> "Config":
@@ -121,6 +132,13 @@ class Config:
             "evalutor_file_path": self.evalutor_file_path,
             "output_dir": self.output_dir,
             "template_dir": self.template_dir,
+            "artifacts_base_path": self.artifacts_base_path,
+            "artifact_size_threshold": self.artifact_size_threshold,
+            "cleanup_old_artifacts": self.cleanup_old_artifacts,
+            "artifact_retention_days": self.artifact_retention_days,
+            "enable_artifacts": self.enable_artifacts,
+            "programs_save_path": self.programs_save_path,
+            "in_memory": self.in_memory,
             # Component configurations
             "llm": {
                 "models": [
@@ -187,6 +205,7 @@ class Config:
                 "random_seed": self.island.random_seed,
                 "evolution_direction": self.island.evolution_direction,
                 "time_of_meeting": self.island.time_of_meeting,
+                "diversity_metric":self.island.diversity_metric,
             },
             "evaluator": {
                 "timeout": self.evaluator.timeout,

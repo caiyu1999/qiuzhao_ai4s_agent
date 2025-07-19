@@ -1,11 +1,53 @@
 import os 
 import re 
+import time 
+import asyncio 
+import tempfile 
+import traceback 
+import json 
+import base64 
+import logging 
 from typing import Dict,Any 
 from openevolve_graph.program import Program 
 from typing import List 
 from openevolve_graph.Config.config import Config 
 from random import random 
 from pydantic import BaseModel
+from typing import Dict, List, Optional, Tuple, Union
+from openevolve_graph.Graph.Graph_state import GraphState
+from openevolve_graph.Config.config import Config
+
+def format_metrics_safe(metrics: Dict[str, Any]) -> str:
+    """
+    Safely format metrics dictionary for logging, handling both numeric and string values.
+
+    Args:
+        metrics: Dictionary of metric names to values
+
+    Returns:
+        Formatted string representation of metrics
+    """
+    if not metrics:
+        return ""
+
+    formatted_parts = []
+    for name, value in metrics.items():
+        # Check if value is numeric (int, float)
+        if isinstance(value, (int, float)):
+            try:
+                # Only apply float formatting to numeric values
+                formatted_parts.append(f"{name}={value:.4f}")
+            except (ValueError, TypeError):
+                # Fallback to string representation if formatting fails
+                formatted_parts.append(f"{name}={value}")
+        else:
+            # For non-numeric values (strings, etc.), just convert to string
+            formatted_parts.append(f"{name}={value}")
+
+    return ", ".join(formatted_parts)
+
+logger = logging.getLogger(__name__)
+
 
 def load_initial_program(path:str)->str:
     # 检查文件是否存在
@@ -16,31 +58,6 @@ def load_initial_program(path:str)->str:
     
     
 
-def extract_code_language(code: str) -> str:
-    """
-    Try to determine the language of a code snippet
-
-    Args:
-        code: Code snippet
-
-    Returns:
-        Detected language or "unknown"
-    """
-    # Look for common language signatures
-    if re.search(r"^(import|from|def|class)\s", code, re.MULTILINE):
-        return "python"
-    elif re.search(r"^(package|import java|public class)", code, re.MULTILINE):
-        return "java"
-    elif re.search(r"^(#include|int main|void main)", code, re.MULTILINE):
-        return "cpp"
-    elif re.search(r"^(function|var|let|const|console\.log)", code, re.MULTILINE):
-        return "javascript"
-    elif re.search(r"^(module|fn|let mut|impl)", code, re.MULTILINE):
-        return "rust"
-    elif re.search(r"^(SELECT|CREATE TABLE|INSERT INTO)", code, re.MULTILINE):
-        return "sql"
-
-    return "unknown"
     
 def _feature_coords_to_key(coords: List[int]) -> str:
     """
@@ -55,7 +72,7 @@ def _feature_coords_to_key(coords: List[int]) -> str:
     return "-".join(str(c) for c in coords)
 
 
-def _calculate_feature_coords(config:Config,state:BaseModel,program: Program) -> List[int]:
+def _calculate_feature_coords(config:Config,state:GraphState,program: Optional[Program | None | Any]) -> List[int]:
     """
     计算程序在MAP-Elites特征网格中的坐标
     
@@ -73,46 +90,223 @@ def _calculate_feature_coords(config:Config,state:BaseModel,program: Program) ->
     """
     coords = []
 
-    for dim in config.island.feature_dimensions:
-        if dim == "complexity":
-            # 使用代码长度作为复杂度度量
-            complexity = len(program.code)
-            bin_idx = min(int(complexity / 1000 * config.island.feature_bins), config.island.feature_bins - 1)
-            coords.append(bin_idx)
-        elif dim == "diversity":
-            # 使用与其他程序的平均编辑距离
-            if len(state.all_programs) < 5:
-                bin_idx = 0
+    if isinstance(program,Program):
+        for dim in config.island.feature_dimensions:
+            if dim == "complexity":
+                # 使用代码长度作为复杂度度量
+                complexity = len(program.code)
+                bin_idx = min(int(complexity / 1000 * config.island.feature_bins), config.island.feature_bins - 1)
+                coords.append(bin_idx)
+            elif dim == "diversity":
+                # 使用与其他程序的平均编辑距离
+                if len(state.all_programs) < 5:
+                    bin_idx = 0
+                else:
+                    sample_programs = random.sample(
+                        state.all_programs.values(), min(5, len(state.all_programs))
+                    )
+                    avg_distance = sum(
+                        calculate_edit_distance(program.code, other.code)
+                        for other in sample_programs
+                    ) / len(sample_programs)
+                    bin_idx = min(
+                        int(avg_distance / 1000 * config.island.feature_bins), config.island.feature_bins - 1
+                    )
+                coords.append(bin_idx)
+            elif dim == "score":
+                # 使用数值指标的平均值
+                if not program.metrics:
+                    bin_idx = 0
+                else:
+                    avg_score = safe_numeric_average(program.metrics)
+                    bin_idx = min(int(avg_score * config.island.feature_bins), config.island.feature_bins - 1)
+                coords.append(bin_idx)
+            elif dim in program.metrics:
+                # 使用特定指标
+                score = program.metrics[dim]
+                bin_idx = min(int(score * config.island.feature_bins), config.island.feature_bins - 1)
+                coords.append(bin_idx)
             else:
-                sample_programs = random.sample(
-                    list(state.all_programs.values()), min(5, len(state.all_programs))
-                )
-                avg_distance = sum(
-                    calculate_edit_distance(program.code, other.code)
-                    for other in sample_programs
-                ) / len(sample_programs)
-                bin_idx = min(
-                    int(avg_distance / 1000 * config.island.feature_bins), config.island.feature_bins - 1
-                )
-            coords.append(bin_idx)
-        elif dim == "score":
-            # 使用数值指标的平均值
-            if not program.metrics:
-                bin_idx = 0
-            else:
-                avg_score = safe_numeric_average(program.metrics)
-                bin_idx = min(int(avg_score * config.island.feature_bins), config.island.feature_bins - 1)
-            coords.append(bin_idx)
-        elif dim in program.metrics:
-            # 使用特定指标
-            score = program.metrics[dim]
-            bin_idx = min(int(score * config.island.feature_bins), config.island.feature_bins - 1)
-            coords.append(bin_idx)
-        else:
-            # 如果未找到特征，默认使用中间分箱
-            coords.append(config.island.feature_bins // 2)
+                # 如果未找到特征，默认使用中间分箱
+                coords.append(config.island.feature_bins // 2)
 
     return coords
+
+
+
+def safe_numeric_average(metrics: Dict[str, Any]) -> float:
+    """
+    Calculate the average of numeric values in a metrics dictionary,
+    safely ignoring non-numeric values like strings.
+
+    Args:
+        metrics: Dictionary of metric names to values
+
+    Returns:
+        Average of numeric values, or 0.0 if no numeric values found
+    """
+    if not metrics:
+        return 0.0
+
+    numeric_values = []
+    for value in metrics.values():
+        if isinstance(value, (int, float)):
+            try:
+                # Convert to float and check if it's a valid number
+                float_val = float(value)
+                if not (float_val != float_val):  # Check for NaN (NaN != NaN is True)
+                    numeric_values.append(float_val)
+            except (ValueError, TypeError, OverflowError):
+                # Skip invalid numeric values
+                continue
+
+    if not numeric_values:
+        return 0.0
+
+    return sum(numeric_values) / len(numeric_values)
+    
+    """
+Utilities for code parsing, diffing, and manipulation
+"""
+
+
+
+def parse_evolve_blocks(code: str) -> List[Tuple[int, int, str]]:
+    """
+    Parse evolve blocks from code
+
+    Args:
+        code: Source code with evolve blocks
+
+    Returns:
+        List of tuples (start_line, end_line, block_content)
+    """
+    lines = code.split("\n")
+    blocks = []
+
+    in_block = False
+    start_line = -1
+    block_content = []
+
+    for i, line in enumerate(lines):
+        if "# EVOLVE-BLOCK-START" in line:
+            in_block = True
+            start_line = i
+            block_content = []
+        elif "# EVOLVE-BLOCK-END" in line and in_block:
+            in_block = False
+            blocks.append((start_line, i, "\n".join(block_content)))
+        elif in_block:
+            block_content.append(line)
+
+    return blocks
+
+
+def apply_diff(original_code: str, diff_text: str) -> str:
+    """
+    Apply a diff to the original code
+
+    Args:
+        original_code: Original source code
+        diff_text: Diff in the SEARCH/REPLACE format
+
+    Returns:
+        Modified code
+    """
+    # Split into lines for easier processing
+    original_lines = original_code.split("\n")
+    result_lines = original_lines.copy()
+
+    # Extract diff blocks
+    diff_blocks = extract_diffs(diff_text)
+
+    # Apply each diff block
+    for search_text, replace_text in diff_blocks:
+        search_lines = search_text.split("\n")
+        replace_lines = replace_text.split("\n")
+
+        # Find where the search pattern starts in the original code
+        for i in range(len(result_lines) - len(search_lines) + 1):
+            if result_lines[i : i + len(search_lines)] == search_lines:
+                # Replace the matched section
+                result_lines[i : i + len(search_lines)] = replace_lines
+                break
+
+    return "\n".join(result_lines)
+
+
+def extract_diffs(diff_text: str) -> List[Tuple[str, str]]:
+    """
+    Extract diff blocks from the diff text
+
+    Args:
+        diff_text: Diff in the SEARCH/REPLACE format
+
+    Returns:
+        List of tuples (search_text, replace_text)
+    """
+    diff_pattern = r"<<<<<<< SEARCH\n(.*?)=======\n(.*?)>>>>>>> REPLACE"
+    diff_blocks = re.findall(diff_pattern, diff_text, re.DOTALL)
+    return [(match[0].rstrip(), match[1].rstrip()) for match in diff_blocks]
+
+
+def parse_full_rewrite(llm_response: str, language: str = "python") -> Optional[str]:
+    """
+    Extract a full rewrite from an LLM response
+
+    Args:
+        llm_response: Response from the LLM
+        language: Programming language
+
+    Returns:
+        Extracted code or None if not found
+    """
+    code_block_pattern = r"```" + language + r"\n(.*?)```"
+    matches = re.findall(code_block_pattern, llm_response, re.DOTALL)
+
+    if matches:
+        return matches[0].strip()
+
+    # Fallback to any code block
+    code_block_pattern = r"```(.*?)```"
+    matches = re.findall(code_block_pattern, llm_response, re.DOTALL)
+
+    if matches:
+        return matches[0].strip()
+
+    # Fallback to plain text
+    return llm_response
+
+
+def format_diff_summary(diff_blocks: List[Tuple[str, str]]) -> str:
+    """
+    Create a human-readable summary of the diff
+
+    Args:
+        diff_blocks: List of (search_text, replace_text) tuples
+
+    Returns:
+        Summary string
+    """
+    summary = []
+
+    for i, (search_text, replace_text) in enumerate(diff_blocks):
+        search_lines = search_text.strip().split("\n")
+        replace_lines = replace_text.strip().split("\n")
+
+        # Create a short summary
+        if len(search_lines) == 1 and len(replace_lines) == 1:
+            summary.append(f"Change {i+1}: '{search_lines[0]}' to '{replace_lines[0]}'")
+        else:
+            search_summary = (
+                f"{len(search_lines)} lines" if len(search_lines) > 1 else search_lines[0]
+            )
+            replace_summary = (
+                f"{len(replace_lines)} lines" if len(replace_lines) > 1 else replace_lines[0]
+            )
+            summary.append(f"Change {i+1}: Replace {search_summary} with {replace_summary}")
+
+    return "\n".join(summary)
 
 
 def calculate_edit_distance(code1: str, code2: str) -> int:
@@ -151,40 +345,245 @@ def calculate_edit_distance(code1: str, code2: str) -> int:
     return dp[m][n]
 
 
-
-def safe_numeric_average(metrics: Dict[str, Any]) -> float:
+def extract_code_language(code: str) -> str:
     """
-    Calculate the average of numeric values in a metrics dictionary,
-    safely ignoring non-numeric values like strings.
+    Try to determine the language of a code snippet
 
     Args:
-        metrics: Dictionary of metric names to values
+        code: Code snippet
 
     Returns:
-        Average of numeric values, or 0.0 if no numeric values found
+        Detected language or "unknown"
     """
-    if not metrics:
-        return 0.0
+    # Look for common language signatures
+    if re.search(r"^(import|from|def|class)\s", code, re.MULTILINE):
+        return "python"
+    elif re.search(r"^(package|import java|public class)", code, re.MULTILINE):
+        return "java"
+    elif re.search(r"^(#include|int main|void main)", code, re.MULTILINE):
+        return "cpp"
+    elif re.search(r"^(function|var|let|const|console\.log)", code, re.MULTILINE):
+        return "javascript"
+    elif re.search(r"^(module|fn|let mut|impl)", code, re.MULTILINE):
+        return "rust"
+    elif re.search(r"^(SELECT|CREATE TABLE|INSERT INTO)", code, re.MULTILINE):
+        return "sql"
 
-    numeric_values = []
-    for value in metrics.values():
-        if isinstance(value, (int, float)):
-            try:
-                # Convert to float and check if it's a valid number
-                float_val = float(value)
-                if not (float_val != float_val):  # Check for NaN (NaN != NaN is True)
-                    numeric_values.append(float_val)
-            except (ValueError, TypeError, OverflowError):
-                # Skip invalid numeric values
-                continue
+    return "unknown"
 
-    if not numeric_values:
-        return 0.0
+    
 
-    return sum(numeric_values) / len(numeric_values)
+def store_artifacts(program_id: str, artifacts: Dict[str, Union[str, bytes]],state:GraphState,config:Config) -> Tuple[Optional[str],Optional[str]]:
+    """
+    为程序存储工件
     
+    工件按大小分类处理：
+    - 小工件：JSON序列化存储在程序对象中
+    - 大工件：保存到磁盘文件
     
+    Args:
+        program_id: 程序ID
+        artifacts: 工件名称到内容的字典
+    """
+    if not artifacts:
+        return None,None
+
+    program = state.all_programs.get(program_id)
+    if not program:
+        logger.warning(f"Cannot store artifacts: program {program_id} not found")
+        return None,None
+
+    # 检查工件是否启用
+    artifacts_enabled = config.enable_artifacts
+    if not artifacts_enabled:
+        logger.debug("Artifacts disabled, skipping storage")
+        return None,None
+
+    # 按大小分割工件
+    small_artifacts = {}
+    large_artifacts = {}
+    size_threshold = getattr(config, "artifact_size_threshold", 32 * 1024)  # 32KB默认
+
+    for key, value in artifacts.items():
+        size = _get_artifact_size(value)
+        if size <= size_threshold:
+            small_artifacts[key] = value
+        else:
+            large_artifacts[key] = value
+
+    # 将小工件存储为JSON
+    if small_artifacts:
+        artifacts_json = json.dumps(small_artifacts, default=_artifact_serializer)
+        logger.debug(f"Stored {len(small_artifacts)} small artifacts for program {program_id}")
+
+    # 将大工件存储到磁盘
+    if large_artifacts:
+        artifact_dir = _create_artifact_dir(program_id,config)
+        # program.artifact_dir = artifact_dir
+        for key, value in large_artifacts.items():
+            _write_artifact_file(artifact_dir, key, value)
+        logger.debug(f"Stored {len(large_artifacts)} large artifacts for program {program_id}")
+    return artifacts_json,artifact_dir
+
+def get_artifacts(program_id: str,state:GraphState,config:Config) -> Dict[str, Union[str, bytes]]:
+    """
+    检索程序的所有工件
     
+    Args:
+        program_id: 程序ID
+        
+    Returns:
+        Dict[str, Union[str, bytes]]: 工件名称到内容的字典
+    """
+    program = state.all_programs.get(program_id)
+    if not program:
+        return {}
+
+    artifacts = {}
+
+    # 从JSON加载小工件
+    if program.artifacts_json:
+        try:
+            small_artifacts = json.loads(program.artifacts_json)
+            artifacts.update(small_artifacts)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to decode artifacts JSON for program {program_id}: {e}")
+
+    # 从磁盘加载大工件
+    if program.artifact_dir and os.path.exists(program.artifact_dir):
+        disk_artifacts = _load_artifact_dir(program.artifact_dir)
+        artifacts.update(disk_artifacts)
+
+    return artifacts
+
+def _get_artifact_size(value: Union[str, bytes]) -> int:
+    """
+    获取工件值的字节大小
     
+    Args:
+        value: 工件值
+        
+    Returns:
+        int: 字节大小
+    """
+    if isinstance(value, str):
+        return len(value.encode("utf-8"))
+    elif isinstance(value, bytes):
+        return len(value)
+    else:
+        return len(str(value).encode("utf-8"))
+
+def _artifact_serializer(obj):
+    """
+    处理字节的工件JSON序列化器
+    
+    Args:
+        obj: 要序列化的对象
+        
+    Returns:
+        序列化后的对象
+    """
+    if isinstance(obj, bytes):
+        return {"__bytes__": base64.b64encode(obj).decode("utf-8")}
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+def _artifact_deserializer(dct):
+    """
+    处理字节的工件JSON反序列化器
+    
+    Args:
+        dct: 要反序列化的字典
+        
+    Returns:
+        反序列化后的对象
+    """
+    if "__bytes__" in dct:
+        return base64.b64decode(dct["__bytes__"])
+    return dct
+
+def _create_artifact_dir(program_id: str,config:Config) -> str:
+    """
+    为程序创建工件目录
+    
+    Args:
+        program_id: 程序ID
+        
+    Returns:
+        str: 工件目录路径
+    """
+    base_path = getattr(config, "artifacts_base_path", None)
+    if not base_path:
+        base_path = (
+            os.path.join(config.programs_save_path or ".", "artifacts")
+            if config.programs_save_path
+            else "./artifacts"
+        )
+
+    artifact_dir = os.path.join(base_path, program_id)
+    os.makedirs(artifact_dir, exist_ok=True)
+    return artifact_dir
+
+def _write_artifact_file(artifact_dir: str, key: str, value: Union[str, bytes]) -> None:
+    """
+    将工件写入文件
+    
+    Args:
+        artifact_dir: 工件目录
+        key: 工件键
+        value: 工件值
+    """
+    # 清理文件名
+    safe_key = "".join(c for c in key if c.isalnum() or c in "._-")
+    if not safe_key:
+        safe_key = "artifact"
+
+    file_path = os.path.join(artifact_dir, safe_key)
+
+    try:
+        if isinstance(value, str):
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(value)
+        elif isinstance(value, bytes):
+            with open(file_path, "wb") as f:
+                f.write(value)
+        else:
+            # 转换为字符串并写入
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(str(value))
+    except Exception as e:
+        logger.warning(f"Failed to write artifact {key} to {file_path}: {e}")
+
+def _load_artifact_dir(artifact_dir: str) -> Dict[str, Union[str, bytes]]:
+    """
+    从目录加载工件
+    
+    Args:
+        artifact_dir: 工件目录
+        
+    Returns:
+        Dict[str, Union[str, bytes]]: 工件字典
+    """
+    artifacts = {}
+
+    try:
+        for filename in os.listdir(artifact_dir):
+            file_path = os.path.join(artifact_dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    # 首先尝试作为文本读取
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    artifacts[filename] = content
+                except UnicodeDecodeError:
+                    # 如果文本失败，作为二进制读取
+                    with open(file_path, "rb") as f:
+                        content = f.read()
+                    artifacts[filename] = content
+                except Exception as e:
+                    logger.warning(f"Failed to read artifact file {file_path}: {e}")
+    except Exception as e:
+        logger.warning(f"Failed to list artifact directory {artifact_dir}: {e}")
+
+    return artifacts
 if __name__ == "__main__": 
     print(load_initial_program("/Users/caiyu/Desktop/langchain/new_openevolve/examples/circle_packing/initial_program.py"))
