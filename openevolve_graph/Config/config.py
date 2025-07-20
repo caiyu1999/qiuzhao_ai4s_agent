@@ -30,7 +30,7 @@ class Config:
     log_dir: str = ""
     diff_based_evolution: bool = True
     allow_full_rewrites: bool = False
-    enable_artifacts: bool = True
+    enable_artifacts: bool = False # 是否开启工件 如果不开启 不存储工件信息
     random_seed: Optional[int] = 42
     max_code_length: int = 20000
     checkpoint_path: str = ""
@@ -44,6 +44,7 @@ class Config:
     cleanup_old_artifacts: bool = True
     artifact_retention_days: int = 30
     
+    archive_size: int = 20
     
     # General settings
     programs_save_path: Optional[str] = None  # Path to store programs on disk
@@ -139,6 +140,7 @@ class Config:
             "enable_artifacts": self.enable_artifacts,
             "programs_save_path": self.programs_save_path,
             "in_memory": self.in_memory,
+            "archive_size": self.archive_size,
             # Component configurations
             "llm": {
                 "models": [
@@ -193,7 +195,6 @@ class Config:
             },
             "island": {
                 "population_size": self.island.population_size,
-                "archive_size": self.island.archive_size,
                 "num_islands": self.island.num_islands,
                 "elite_selection_ratio": self.island.elite_selection_ratio,
                 "exploration_ratio": self.island.exploration_ratio,

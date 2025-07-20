@@ -425,36 +425,7 @@ def store_artifacts(program_id: str, artifacts: Dict[str, Union[str, bytes]],sta
         logger.debug(f"Stored {len(large_artifacts)} large artifacts for program {program_id}")
     return artifacts_json,artifact_dir
 
-def get_artifacts(program_id: str,state:GraphState,config:Config) -> Dict[str, Union[str, bytes]]:
-    """
-    检索程序的所有工件
-    
-    Args:
-        program_id: 程序ID
-        
-    Returns:
-        Dict[str, Union[str, bytes]]: 工件名称到内容的字典
-    """
-    program = state.all_programs.get(program_id)
-    if not program:
-        return {}
 
-    artifacts = {}
-
-    # 从JSON加载小工件
-    if program.artifacts_json:
-        try:
-            small_artifacts = json.loads(program.artifacts_json)
-            artifacts.update(small_artifacts)
-        except json.JSONDecodeError as e:
-            logger.warning(f"Failed to decode artifacts JSON for program {program_id}: {e}")
-
-    # 从磁盘加载大工件
-    if program.artifact_dir and os.path.exists(program.artifact_dir):
-        disk_artifacts = _load_artifact_dir(program.artifact_dir)
-        artifacts.update(disk_artifacts)
-
-    return artifacts
 
 def _get_artifact_size(value: Union[str, bytes]) -> int:
     """
@@ -585,5 +556,189 @@ def _load_artifact_dir(artifact_dir: str) -> Dict[str, Union[str, bytes]]:
         logger.warning(f"Failed to list artifact directory {artifact_dir}: {e}")
 
     return artifacts
+
+
+
+def get_top_programs(state:GraphState, n: int = 10,metric:Optional[str] = None) -> List[Program]:
+    """
+    获取前N个最优程序 从all_programs中  以metric为指标排序
+
+    Args:
+        n: 返回的程序数量
+        metric: 用于排序的指标名称（可选，默认使用平均值）
+
+    Returns:
+        List[Program]: 前N个最优程序列表
+    """
+    if not state.all_programs:
+        return []
+
+    if metric:
+        # 按指定指标排序
+        sorted_programs = sorted(
+            [p for p in state.all_programs.get_all_programs().values() if metric in p.metrics],
+            key=lambda p: p.metrics[metric],
+            reverse=True,
+        )
+    else:
+        # 按所有数值指标的平均值排序
+        sorted_programs = sorted(
+            state.all_programs.get_all_programs().values(),
+            key=lambda p: safe_numeric_average(p.metrics),
+            reverse=True,
+        )
+
+    return sorted_programs[:n]
+def _load_artifact_dir(artifact_dir: str) -> Dict[str, Union[str, bytes]]:
+        """Load artifacts from a directory"""
+        artifacts = {}
+
+        try:
+            for filename in os.listdir(artifact_dir):
+                file_path = os.path.join(artifact_dir, filename)
+                if os.path.isfile(file_path):
+                    try:
+                        # Try to read as text first
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        artifacts[filename] = content
+                    except UnicodeDecodeError:
+                        # If text fails, read as binary
+                        with open(file_path, "rb") as f:
+                            content = f.read()
+                        artifacts[filename] = content
+                    except Exception as e:
+                        logger.warning(f"Failed to read artifact file {file_path}: {e}")
+        except Exception as e:
+            logger.warning(f"Failed to list artifact directory {artifact_dir}: {e}")
+
+        return artifacts
+def get_artifacts(state:GraphState,program_id: str) -> Dict[str, Union[str, bytes]]:
+
+        program = state.all_programs.get_program(program_id)
+        if not program:
+            return {}
+
+        artifacts = {}
+
+        # Load small artifacts from JSON
+        if program.artifacts_json:
+            try:
+                small_artifacts = json.loads(program.artifacts_json)
+                artifacts.update(small_artifacts)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to decode artifacts JSON for program {program_id}: {e}")
+
+        # Load large artifacts from disk
+        if program.artifact_dir and os.path.exists(program.artifact_dir):
+            disk_artifacts = _load_artifact_dir(program.artifact_dir)
+            artifacts.update(disk_artifacts)
+
+        return artifacts
+    
+    
+    
+    
+"""
+Safe calculation utilities for metrics containing mixed types
+"""
+
+from typing import Any, Dict
+
+def _is_better(program1: Program, program2: Program) -> bool:
+        """
+        判断program1是否优于program2
+        
+        比较策略：
+        1. 优先使用combined_score
+        2. 后备使用所有数值指标的平均值
+        3. 如果都没有指标，使用时间戳
+        
+        Args:
+            program1: 第一个程序
+            program2: 第二个程序
+            
+        Returns:
+            bool: 如果program1更好则返回True
+        """
+        # 如果都没有指标，使用最新的
+        if not program1.metrics and not program2.metrics:
+            return program1.timestamp > program2.timestamp
+
+        # 如果只有一个有指标，它就更好
+        if program1.metrics and not program2.metrics:
+            return True
+        if not program1.metrics and program2.metrics:
+            return False
+
+        # 优先检查combined_score（首选指标）
+        if "combined_score" in program1.metrics and "combined_score" in program2.metrics:
+            return program1.metrics["combined_score"] > program2.metrics["combined_score"]
+
+        # 后备使用所有数值指标的平均值
+        avg1 = safe_numeric_average(program1.metrics)
+        avg2 = safe_numeric_average(program2.metrics)
+
+        return avg1 > avg2
+def safe_numeric_average(metrics: Dict[str, Any]) -> float:
+    """
+    Calculate the average of numeric values in a metrics dictionary,
+    safely ignoring non-numeric values like strings.
+
+    Args:
+        metrics: Dictionary of metric names to values
+
+    Returns:
+        Average of numeric values, or 0.0 if no numeric values found
+    """
+    if not metrics:
+        return 0.0
+
+    numeric_values = []
+    for value in metrics.values():
+        if isinstance(value, (int, float)):
+            try:
+                # Convert to float and check if it's a valid number
+                float_val = float(value)
+                if not (float_val != float_val):  # Check for NaN (NaN != NaN is True)
+                    numeric_values.append(float_val)
+            except (ValueError, TypeError, OverflowError):
+                # Skip invalid numeric values
+                continue
+
+    if not numeric_values:
+        return 0.0
+
+    return sum(numeric_values) / len(numeric_values)
+
+
+def safe_numeric_sum(metrics: Dict[str, Any]) -> float:
+    """
+    Calculate the sum of numeric values in a metrics dictionary,
+    safely ignoring non-numeric values like strings.
+
+    Args:
+        metrics: Dictionary of metric names to values
+
+    Returns:
+        Sum of numeric values, or 0.0 if no numeric values found
+    """
+    if not metrics:
+        return 0.0
+
+    numeric_sum = 0.0
+    for value in metrics.values():
+        if isinstance(value, (int, float)):
+            try:
+                # Convert to float and check if it's a valid number
+                float_val = float(value)
+                if not (float_val != float_val):  # Check for NaN (NaN != NaN is True)
+                    numeric_sum += float_val
+            except (ValueError, TypeError, OverflowError):
+                # Skip invalid numeric values
+                continue
+
+    return numeric_sum
+
 if __name__ == "__main__": 
     print(load_initial_program("/Users/caiyu/Desktop/langchain/new_openevolve/examples/circle_packing/initial_program.py"))

@@ -128,4 +128,5 @@ class ResponseFormatter_template_evaluator(BaseModel):
     readability: float = Field(default=0.0,description="The readability score of the code(0.0-1.0), the higher the score, the more readable the code",ge=0.0,le=1.0)
     maintainability: float = Field(default=0.0,description="The maintainability score of the code(0.0-1.0), the higher the score, the more maintainable the code",ge=0.0,le=1.0)
     efficiency: float = Field(default=0.0,description="The efficiency score of the code(0.0-1.0), the higher the score, the more efficient the code",ge=0.0,le=1.0)
+    other_information: str = Field(default="",description="Other information you want to add, in the form of text. If you don't want to add any other information, please return ''")
     # reasoning: str = Field(default="",description="The short reasoning for the scores")

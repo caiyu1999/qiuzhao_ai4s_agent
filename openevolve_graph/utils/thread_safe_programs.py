@@ -51,8 +51,7 @@ class ThreadSafePrograms:
         """内部获取程序方法"""
         with self._lock():
             if key not in self._programs:
-                raise ValueError(f"Program with ID {key} not found")
-        with self._lock():
+                return None
             return self._programs[key]
     
     def _internal_contains(self, key: str) -> bool:
@@ -107,7 +106,7 @@ class ThreadSafePrograms:
         with self._lock():
             return self._internal_remove(program_id)
     
-    def get_program(self, program_id: str) -> Optional[Program]:
+    def get_program(self, program_id: str) -> Optional[Program|None|Any]:
         """获取程序（基类 get 方法的别名）"""
         with self._lock():
             return self._internal_get(program_id)
