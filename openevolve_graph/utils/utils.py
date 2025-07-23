@@ -14,7 +14,7 @@ from openevolve_graph.Config.config import Config
 from random import random 
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Tuple, Union
-from openevolve_graph.Graph.Graph_state import GraphState
+# from openevolve_graph.Graph.Graph_state import BaseModel
 from openevolve_graph.Config.config import Config
 
 def format_metrics_safe(metrics: Dict[str, Any]) -> str:
@@ -69,10 +69,10 @@ def _feature_coords_to_key(coords: List[int]) -> str:
     Returns:
         str: 字符串键
     """
-    return "-".join(str(c) for c in coords)
+    return "-".join(str(c) for c in coords) # e.g [0,1,2,-1] -> "0-1-2--1"
 
 
-def _calculate_feature_coords(config:Config,state:GraphState,program: Optional[Program | None | Any]) -> List[int]:
+def _calculate_feature_coords(config:Config,state:BaseModel,program: Optional[Program | None | Any]) -> List[int]:
     """
     计算程序在MAP-Elites特征网格中的坐标
     
@@ -373,57 +373,43 @@ def extract_code_language(code: str) -> str:
 
     
 
-def store_artifacts(program_id: str, artifacts: Dict[str, Union[str, bytes]],state:GraphState,config:Config) -> Tuple[Optional[str],Optional[str]]:
+def store_artifacts(
+    program_id: str,
+    artifacts: Dict[str, Any],
+    state: "GraphState",
+    config: "Config",
+) -> Tuple[str, str]:
     """
-    为程序存储工件
-    
-    工件按大小分类处理：
-    - 小工件：JSON序列化存储在程序对象中
-    - 大工件：保存到磁盘文件
-    
+    Store artifacts to disk
     Args:
-        program_id: 程序ID
-        artifacts: 工件名称到内容的字典
+        program_id (str): ID of program
+        artifacts (Dict[str, str | bytes]): Artifacts to store
+        state (GraphState): Graph state
+        config (Config): Config object
+    Returns:
+        Tuple[str, str]: Path to artifacts JSON and directory
     """
-    if not artifacts:
-        return None,None
+    if not config.enable_artifacts:
+        return None, None
 
-    program = state.all_programs.get(program_id)
-    if not program:
-        logger.warning(f"Cannot store artifacts: program {program_id} not found")
-        return None,None
+    # Create a directory for the program's artifacts
+    artifact_dir = os.path.join(config.artifact_dir, program_id)
+    os.makedirs(artifact_dir, exist_ok=True)
 
-    # 检查工件是否启用
-    artifacts_enabled = config.enable_artifacts
-    if not artifacts_enabled:
-        logger.debug("Artifacts disabled, skipping storage")
-        return None,None
-
-    # 按大小分割工件
-    small_artifacts = {}
-    large_artifacts = {}
-    size_threshold = getattr(config, "artifact_size_threshold", 32 * 1024)  # 32KB默认
-
+    # Save artifacts to files and store paths in a JSON file
+    artifact_paths = {}
     for key, value in artifacts.items():
-        size = _get_artifact_size(value)
-        if size <= size_threshold:
-            small_artifacts[key] = value
-        else:
-            large_artifacts[key] = value
+        # Handle different artifact types
+        path = _artifact_serializer(key, value, artifact_dir)
+        if path:
+            artifact_paths[key] = path
 
-    # 将小工件存储为JSON
-    if small_artifacts:
-        artifacts_json = json.dumps(small_artifacts, default=_artifact_serializer)
-        logger.debug(f"Stored {len(small_artifacts)} small artifacts for program {program_id}")
+    # Save the artifact paths to a JSON file
+    artifacts_json_path = os.path.join(artifact_dir, "artifacts.json")
+    with open(artifacts_json_path, "w") as f:
+        json.dump(artifact_paths, f)
 
-    # 将大工件存储到磁盘
-    if large_artifacts:
-        artifact_dir = _create_artifact_dir(program_id,config)
-        # program.artifact_dir = artifact_dir
-        for key, value in large_artifacts.items():
-            _write_artifact_file(artifact_dir, key, value)
-        logger.debug(f"Stored {len(large_artifacts)} large artifacts for program {program_id}")
-    return artifacts_json,artifact_dir
+    return artifacts_json_path, artifact_dir
 
 
 
@@ -444,7 +430,7 @@ def _get_artifact_size(value: Union[str, bytes]) -> int:
     else:
         return len(str(value).encode("utf-8"))
 
-def _artifact_serializer(obj):
+def _artifact_serializer(key: str, value: Union[str, bytes], artifact_dir: str) -> Optional[str]:
     """
     处理字节的工件JSON序列化器
     
@@ -454,9 +440,44 @@ def _artifact_serializer(obj):
     Returns:
         序列化后的对象
     """
-    if isinstance(obj, bytes):
-        return {"__bytes__": base64.b64encode(obj).decode("utf-8")}
-    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+    if isinstance(value, bytes):
+        safe_key = "".join(c for c in key if c.isalnum() or c in "._-")
+        if not safe_key:
+            safe_key = "artifact"
+        file_path = os.path.join(artifact_dir, safe_key)
+        try:
+            with open(file_path, "wb") as f:
+                f.write(value)
+            return file_path
+        except Exception as e:
+            logger.warning(f"Failed to write artifact {key} to {file_path}: {e}")
+            return None
+    elif isinstance(value, str):
+        safe_key = "".join(c for c in key if c.isalnum() or c in "._-")
+        if not safe_key:
+            safe_key = "artifact"
+        file_path = os.path.join(artifact_dir, safe_key)
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(value)
+            return file_path
+        except Exception as e:
+            logger.warning(f"Failed to write artifact {key} to {file_path}: {e}")
+            return None
+    else:
+        # For other types, try to serialize to JSON
+        try:
+            json_value = json.dumps(value)
+            safe_key = "".join(c for c in key if c.isalnum() or c in "._-")
+            if not safe_key:
+                safe_key = "artifact"
+            file_path = os.path.join(artifact_dir, safe_key)
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(json_value)
+            return file_path
+        except Exception as e:
+            logger.warning(f"Failed to serialize artifact {key} to JSON: {e}")
+            return None
 
 def _artifact_deserializer(dct):
     """
@@ -559,7 +580,7 @@ def _load_artifact_dir(artifact_dir: str) -> Dict[str, Union[str, bytes]]:
 
 
 
-def get_top_programs(state:GraphState, n: int = 10,metric:Optional[str] = None) -> List[Program]:
+def get_top_programs(state:BaseModel, n: int = 10,metric:Optional[str] = None) -> List[Program]:
     """
     获取前N个最优程序 从all_programs中  以metric为指标排序
 
@@ -613,7 +634,7 @@ def _load_artifact_dir(artifact_dir: str) -> Dict[str, Union[str, bytes]]:
             logger.warning(f"Failed to list artifact directory {artifact_dir}: {e}")
 
         return artifacts
-def get_artifacts(state:GraphState,program_id: str) -> Dict[str, Union[str, bytes]]:
+def get_artifacts(state:BaseModel,program_id: str) -> Dict[str, Union[str, bytes]]:
 
         program = state.all_programs.get_program(program_id)
         if not program:

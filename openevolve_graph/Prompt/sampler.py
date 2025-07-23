@@ -7,7 +7,7 @@ from openevolve_graph.Config.config import PromptConfig
 from openevolve_graph.Prompt.templates import TemplateManager_langchain
 from openevolve_graph.utils.utils import safe_numeric_average
 
-logger = logging.getLogger(__name__)
+#logger = logging.get#logger(__name__)
 
 
 class PromptSampler_langchain:
@@ -37,7 +37,7 @@ class PromptSampler_langchain:
         self.system_template_override = None  # 系统消息模板覆盖
         self.user_template_override = None    # 用户消息模板覆盖
 
-        logger.info("初始化提示采样器完成")
+        ##logger.info("初始化提示采样器完成")
     def set_templates(
         self, system_template: Optional[str] = None, user_template: Optional[str] = None
     ) -> None:
@@ -50,7 +50,7 @@ class PromptSampler_langchain:
         """
         self.system_template_override = system_template
         self.user_template_override = user_template
-        logger.info(f"设置自定义模板: 系统模板={system_template}, 用户模板={user_template}")
+        ##logger.info(f"设置自定义模板: 系统模板={system_template}, 用户模板={user_template}")
 
     def build_prompt(
         self,
@@ -97,13 +97,13 @@ class PromptSampler_langchain:
         else:
             # 默认行为：基于差异 vs 完全重写
             user_template_key = "diff_user" if diff_based_evolution else "full_rewrite_user"
-        # print(f"user_template_key: {user_template_key}")
+        # ##logger.info(f"user_template_key: {user_template_key}")
         # 获取模板
         user_template = self.template_manager.get_template(user_template_key)
-        print("user_template","\n",user_template)
+        ##logger.info(f"user_template:{user_template}")
         # 如果设置了系统模板覆盖，则使用它
         if self.system_template_override:
-            print(f"system_template_override: {self.system_template_override}")
+            ##logger.info(f"system_template_override: {self.system_template_override}")
             system_message = self.template_manager.get_template(self.system_template_override)
         else:
             system_message = self.config.system_message
@@ -112,27 +112,29 @@ class PromptSampler_langchain:
                 system_message = self.template_manager.get_template(system_message)
 
         # 格式化指标
+        ##logger.info(f"program_metrics before format:{program_metrics}")
         metrics_str = self._format_metrics(program_metrics)
+        ##logger.info(f"metrics_str after format:{metrics_str}")
 
         # 识别改进领域
         improvement_areas = self._identify_improvement_areas(
             current_program, parent_program, program_metrics, previous_programs
         )
-
+        ##logger.info(f"improvement_areas:{improvement_areas}")
         # 格式化演化历史
         evolution_history = self._format_evolution_history(
             previous_programs, top_programs, inspirations, language
         )
-
+        ##logger.info(f"evolution_history:{evolution_history}")
         # 如果启用并且可用，格式化工件部分
         artifacts_section = ""
         if self.config.include_artifacts and program_artifacts:
             artifacts_section = self._render_artifacts(program_artifacts)
-
+        ##logger.info(f"artifacts_section:{artifacts_section}")
         # 如果启用，应用随机模板变化
-        if self.config.use_template_stochasticity:
-            user_template = self._apply_template_variations(user_template)
-
+        # if self.config.use_template_stochasticity:
+        #     user_template = self._apply_template_variations(user_template)
+        # ##logger.info("user_template","\n",user_template)
 
         
         user_message = user_template.invoke({
@@ -142,18 +144,18 @@ class PromptSampler_langchain:
             "current_program": current_program,
             "language": language,
             "artifacts": artifacts_section,
-        })
+        }).to_string()
 
         # The result of 'invoke' is a PromptValue object, which cannot be added.
         # The method signature also indicates a Dict[str, str] should be returned.
         if isinstance(system_message,str):
             system_prompt = system_message
-            # print(f"system_prompt: {system_prompt}")
+            # ##logger.info(f"system_prompt: {system_prompt}")
         else:
             system_prompt = (system_message.invoke({})).to_string()
-        # print(f"system_prompt: {system_prompt}")
-        
-        return system_prompt +user_message.to_string()
+        # ##logger.info(f"system_prompt: {system_prompt}")
+        if isinstance(system_prompt,str) and isinstance(user_message,str):
+            return system_prompt + user_message
 
 
     def _format_metrics(self, metrics: Dict[str, float]) -> str:
@@ -345,8 +347,8 @@ class PromptSampler_langchain:
         for i, program in enumerate(selected_top):
             # Extract a snippet (first 10 lines) for display
             program_code = program.get("code", "")
-            program_snippet = "\n".join(program_code.split("\n")[:10])
-            if len(program_code.split("\n")) > 10:
+            program_snippet = "\n".join(program_code.split("\n")[:60])
+            if len(program_code.split("\n")) > 60:
                 program_snippet += "\n# ... (truncated for brevity)"
 
             # Calculate a composite score using safe numeric average
@@ -576,17 +578,17 @@ class PromptSampler_langchain:
             
         return ", ".join(features[:3])  # Limit to top 3 features
 
-    def _apply_template_variations(self, template: str) -> str:
-        """Apply stochastic variations to the template"""
-        result = template
+    # def _apply_template_variations(self, template: str) -> str:
+    #     """Apply stochastic variations to the template"""
+    #     result = template
 
-        # Apply variations defined in the config
-        for key, variations in self.config.template_variations.items():
-            if variations and f"{{{key}}}" in result:
-                chosen_variation = random.choice(variations)
-                result = result.replace(f"{{{key}}}", chosen_variation)
+    #     # Apply variations defined in the config
+    #     for key, variations in self.config.template_variations.items():
+    #         if variations and f"{{{key}}}" in result:
+    #             chosen_variation = random.choice(variations)
+    #             result = result.replace(f"{{{key}}}", chosen_variation)
 
-        return result
+    #     return result
 
     def _render_artifacts(self, artifacts: Dict[str, Union[str, bytes]]) -> str:
         """
@@ -682,4 +684,4 @@ if __name__ == "__main__":
         return a+b
     '''
     prompt = sampler.build_prompt(current_program=test_code,template_key="evaluation")
-    print("prompt","\n",prompt)
+    # ##logger.info("prompt","\n",prompt)

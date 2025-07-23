@@ -18,8 +18,8 @@ class Program:
     """
 
     # 程序标识信息
-    id: str  # 程序唯一标识符
-    code: str  # 程序源代码
+    id: str = "" # 程序唯一标识符
+    code: str = ""  # 程序源代码
     language: str = "python"  # 编程语言，默认为Python
 
     # 进化相关信息

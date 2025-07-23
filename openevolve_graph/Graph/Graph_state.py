@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List, Annotated , Tuple
 from openevolve_graph.program import Program
 from openevolve_graph.Config import Config
-
+import operator 
 import uuid
 import os
 import time
@@ -13,125 +13,40 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
+from openevolve_graph.utils.utils import _is_better
 # 合并函数现在从 langgraph_compatible_container 模块导入
-from openevolve_graph.utils.thread_safe_programs import ThreadSafePrograms
+from openevolve_graph.utils.thread_safe_programs import Programs_container
+import logging
+logger = logging.getLogger(__name__)
 
-# 合并函数现在从 thread_safe_container 模块导入
 
-
-def reducer_tuple(left: Dict[str, Any], right: Optional[Dict[str,Any]]|Tuple[str,Any]|List[Tuple[str,Any]]|None):
-    '''
-    在初始化时 传入的right和left是一个类型  用right替换left即可
-    在运行过程中 传入的right是tuple类型 需要将tuple中的值更新到left中
-    '''
-    print(f"reducer_tuple left: {left}, right: {right}")
+def reducer_for_feature_map(left:Dict[str,Any],
+                            right:Optional[Tuple[str,str]]|Dict[str,Any]|Tuple[str,str,str])->Dict[str,Any]|None:
     if right is None:
         return left 
     
     if isinstance(right,dict):
-        print(f"reducer_tuple right is a dict")
-        return right
+        return right 
     
-    elif isinstance(right,list):
-        merge = left.copy()
-        for item in right:
-            if len(item) == 2:
-                island_id = item[0]
-                value = item[1]
-                merge[island_id] = value
-            else:
-                raise ValueError("reducer_tuple right must be a tuple of length 2, but you give me a {}".format(len(item)))
     elif isinstance(right,tuple):
-        merge = left.copy()
         if len(right) == 2:
-            island_id = right[0]
-            value = right[1]
-            merge[island_id] = value
-        else:       
-            raise ValueError("reducer_tuple right must be a tuple of length 2 or 3, but you give me a {}".format(len(right)))
-    return merge 
+            feature_key = right[0]
+            program_id = right[1]
+            left[feature_key] = program_id
+    else:
+        raise ValueError("reducer_for_feature_map right must be a tuple of length 2, but you give me a {}".format(len(right)))
+    return left
 
-
-def reducer_for_safe_container_island_programs(left:Dict[str,ThreadSafePrograms],right:Optional[Tuple[str,str,Program]|Tuple[str,str,str,str,Program]| Dict[str,ThreadSafePrograms]]|List[Tuple[str,Any]])->Dict[str,ThreadSafePrograms]:
+def reducer_for_safe_container_all_programs(left:Programs_container,right:Optional[Tuple[str,Program]|Programs_container]|List[Tuple[str,Any]]|Tuple[str,str,Program])->Programs_container:
     '''
     这里需要定义新的程序添加时的更新方式 
     '''
-    print(f"reducer_for_safe_container_island_programs left: {left}, right: {right}")
+    #print(f"reducer_for_safe_container_all_programs left: {left}, right: {right}")
     if right is None:
+        #print(f"reducer_for_safe_container_all_programs right is None")
         return left 
     
-    if isinstance(right,dict):
-        return right
-    
-    elif isinstance(right,list): #添加，删除，更新多个程序 或者 替换多个程序
-        merge = left.copy()
-        for item in right:
-            if len(item) == 3:
-                operation = item[0]
-                island_id = item[1]
-                program = item[2]
-                if operation == "add":
-                    merge[island_id].add_program(program.id,program)
-                elif operation == "remove":
-                    merge[island_id].remove_program(program.id)
-                elif operation == "update":
-                    merge[island_id].update_program(program.id,program)
-                else:
-                    raise ValueError("reducer_for_safe_container_island_programs right must be a tuple of length 3, but you give me a {}".format(len(item)))
-            if len(item) == 5:
-                operation = item[0]
-                island_id = item[1]
-                program_need_replace_id = item[2]# 需要被替换的程序id
-                program_replace_with_id = item[3]# 替换的程序id
-                program_replace_with_program = item[4]# 替换的程序对象
-                if operation == 'replace':
-                    merge[island_id].remove_program(program_need_replace_id)
-                    merge[island_id].add_program(program_replace_with_id,program_replace_with_program)
-                else:
-                    raise ValueError("reducer_for_safe_container_island_programs right must be a tuple of length 4, but you give me a {}".format(len(item)))
-        return merge 
-    
-    
-    elif isinstance(right,tuple): #添加，删除，更新单个程序 或者 替换单个程序
-        if len(right) == 3:
-            merge = left.copy()
-            operation = right[0]
-            island_id = right[1]
-            program = right[2]
-            if operation == "add":
-                merge[island_id].add_program(program.id,program)    
-            elif operation == "remove":
-                merge[island_id].remove_program(program.id)
-            elif operation == "update":
-                merge[island_id].update_program(program.id,program)
-            else:
-                raise ValueError("reducer_for_safe_container_island_programs right must be a tuple of length 3, but you give me a {}".format(len(right)))
-            return merge 
-        if len(right) == 5:
-            merge = left.copy()
-            operation = right[0]
-            island_id = right[1]
-            program_need_replace_id = right[2]# 需要被替换的程序id
-            program_replace_with_id = right[3]# 替换的程序id
-            program_replace_with_program = right[4]# 替换的程序对象
-            if operation == 'replace':
-                merge[island_id].remove_program(program_need_replace_id)
-                merge[island_id].add_program(program_replace_with_id,program_replace_with_program)
-            else:
-                raise ValueError("reducer_for_safe_container_island_programs right must be a tuple of length 4, but you give me a {}".format(len(item)))
-    
-
-
-def reducer_for_safe_container_all_programs(left:ThreadSafePrograms,right:Optional[Tuple[str,Program]|ThreadSafePrograms]|List[Tuple[str,Any]])->ThreadSafePrograms:
-    '''
-    这里需要定义新的程序添加时的更新方式 
-    '''
-    print(f"reducer_for_safe_container_all_programs left: {left}, right: {right}")
-    if right is None:
-        print(f"reducer_for_safe_container_all_programs right is None")
-        return left 
-    
-    if isinstance(right,ThreadSafePrograms):
+    if isinstance(right,Programs_container):
         return right
     
     elif isinstance(right,list):
@@ -150,10 +65,48 @@ def reducer_for_safe_container_all_programs(left:ThreadSafePrograms,right:Option
                     raise ValueError("reducer_for_safe_container_all_programs right must be a tuple of length 2, but you give me a {}".format(len(item)))
         return merge 
     
-
-
-
-
+    elif isinstance(right,tuple):
+        merge = left.copy()
+        if len(right) == 2:
+            operation = right[0]
+            program = right[1]
+            if operation == "add":
+                merge.add_program(program.id,program)
+            elif operation == "remove":
+                merge.remove_program(program.id)
+            elif operation == "update":
+                merge.update_program(program.id,program)
+            else:
+                raise ValueError("reducer_for_safe_container_all_programs right must be a tuple of length 2, but you give me a {}".format(len(right)))
+        
+        elif len(right) == 3:
+            operation = right[0]
+            program_need_replace_id = right[1] #将被替换的程序id
+            program_replace_with_program = right[2] #替换的程序对象
+            if operation == "replace":
+                merge.remove_program(program_need_replace_id)
+                merge.add_program(program_replace_with_program.id,program_replace_with_program)
+            else:
+                raise ValueError("reducer_for_safe_container_all_programs right must be a tuple of length 4, but you give me a {}".format(len(right)))
+        else:
+            raise ValueError("reducer_for_safe_container_all_programs right must be a tuple of length 2 or 4, but you give me a {}".format(len(right)))
+        return merge 
+    
+    
+    
+    
+def reducer_best_program(left:Program,right:Program)->Program:
+    '''
+    best_program的更新方式 只需传入最好的Program即可
+    '''
+    
+    if not isinstance(right,Program):
+        raise ValueError(f"right is not a Program object: {right}")
+    if not isinstance(left,Program):
+        raise ValueError(f"left is not a Program object: {left}")
+    if _is_better(right,left):
+        return right 
+    return left
 
 
 class IslandStatus(Enum):
@@ -172,92 +125,129 @@ class IslandStatus(Enum):
     GENERATE_CHILD = "generate_child" # 生成子代程序 
     EVALUATE_CHILD = "evaluate_child" # 评估子代程序 并添加到程序库中
     UPDATE = "update" # 更新岛屿 精英程序等信息 
+
+
+def reducer_for_single_parameter(left:Any,right:Any)->Any:
+    '''
+    这个函数用来更新单个参数  这个参数在迭代过程中是永远不变的 
+    '''
+    return right 
+    
+class IslandState(BaseModel):
+    '''
+    对于一个岛屿来说 同一个时间只有一个节点能够修改它的value 所以不用担心线程安全问题
+    
+    '''
+    
+    model_config = {"arbitrary_types_allowed": True}
+    # 岛屿id
+    id:str = Field(default=f"{__name__}")
+    # 岛屿上的所有程序 存放在这个container中
+    programs:Annotated[Programs_container,reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container)
+    # 岛屿上目前的最新程序(child) 
+    latest_program: Program = Field(default_factory=Program)
+    # 当前的状态(最后运行的节点)
+    status:IslandStatus = Field(default=IslandStatus.INIT_STATE)
+    # 生成的提示词  
+    prompt:str = Field(default="")
+    
+    language:str = Field(default="python")
+    
+    # sample_program 采样的父代程序
+    sample_program:Program = Field(default_factory=Program)
+    # sample_inspirations 采样的灵感程序 
+    sample_inspirations:List[str] = Field(default_factory=list)
+    # 岛屿上最好的程序
+    best_program:Program = Field(default_factory=Program)
+    # iteration 迭代次数  
+    iteration:int = Field(default=0)
+    # 岛屿的进化方向 这里暂定空字典 在后面添加 负责指导岛屿的总体进化方向 安全 e.g. {"island_id":"evolution_direction"}
+    # island_evolution_direction:str = Field(default="") #这个在后期可以实现
+    
+    # LLM_GENERATE 相关
+    # 在基于diff进化的情况下启用 
+    diff_message:str = Field(default="")
+    # 在基于rewrite进化的情况下启用 
+    rewrite_message:str = Field(default="")
+    # 改进代码的suggestion 
+    suggestion_message:str = Field(default="")
+    # 总结 
+    change_summary:str = Field(default="")
+    
+    llm_generate_success:bool = Field(default=False)
+    evaluate_success:bool = Field(default=False)
+    
+    # 每次meeting后分配给各个岛屿的临时文件 
+    # "all programs" 全部程序 实际上是主图中的程序库 岛屿内部会临时更新 但是在下一次meeting这个值会更新为最新的主图中的程序库
+    all_programs:Annotated[Programs_container,reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container) 
+    # 全部程序的特征坐标 同上
+    feature_map:Annotated[Dict[str,Any],reducer_for_feature_map] = Field(default_factory=dict)
+    # 精英归档 里面存放Program对象 各个岛屿上的精英归档汇总在这个dict中  同上
+    archive:Annotated[Programs_container,reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container)
+    # 全部程序中的最好程序
+    all_best_program:Program = Field(default_factory=Program)
+ 
+    def to_dict(self)->Dict[str,Any]:
+        return self.model_dump()
+
+    @classmethod
+    def from_dict(cls,data:Dict[str,Any])->"IslandState":
+        return IslandState(**data)
+def reducer_IslandState(left:IslandState,right:IslandState)->IslandState:
+    '''
+    IslandState的更新方式 只需传入IslandState即可
+    在汇合节点中 多个子图的IslandState会更新到父节点的状态中
+    直接用新的覆盖旧的即可
+    '''
+    if not isinstance(right,IslandState):
+        raise ValueError("reducer_IslandState right must be a IslandState, but you give me a {}".format(type(right)))
+    if not isinstance(left,IslandState):
+        raise ValueError("reducer_IslandState left must be a IslandState, but you give me a {}".format(type(left)))
     
     
-    # APPLY_DIFF = "apply_diff" # 应用差异
-    # EVALUTE_PROGRAM = "evalute_program" # 评估程序
-    # GET_PENDING_ARTIFACTS = "get_pending_artifacts" # 获取待处理的工件
-    # ADD_PROGRAM = "add_program" # 将程序存入数据库
-    # MEETING = "meeting" # 交流会 在交流会会进行迁移
-
-    # 迁移
-
-
-
+    # 因为多个子图在汇合的时候
+    return right
+    
 class GraphState(BaseModel):
     '''
     图的共享状态 在运行的过程中会不断更新
     要注意在并行运行的时候不同的子图会同时修改某个状态 要保证不能冲突
     只有在岛屿交流会议上 才会更新一些共享内容 其他时候都是岛屿内部更新 安全
-    
     需要指定里面所有值的更新方式
-'''       
+    '''       
     # 配置 Pydantic 以允许任意类型
     model_config = {"arbitrary_types_allowed": True}
-    # 全局共享状态
-    init_program:str = Field(default="") # 初始程序的id 全局只有一个 这个值不会被更新 安全
-    evaluation_program:str = Field(default="") # 评估程序的code 全局只有一个 这个值不会被更新 安全
-    language:str = Field(default="python") # 编程语言 安全
-    file_extension:str = Field(default="py") # 文件扩展名 安全
-    num_islands:int = Field(default=0) # 岛屿的数量  安全
-    islands_id:List[str] = Field(default_factory=list) # 岛屿的id 安全 岛屿的id是全局唯一的 不会被更新 安全
-    status:Annotated[Dict[str,Any],reducer_tuple] = Field(default_factory=dict) # 岛屿当前的状态 (运行到了哪一步) 岛屿内部更新 安全 e.g. {"island_id":IslandStatus.INIT} 默认reducer
-    # island_evolution_direction:Dict[str,str] = Field(default_factory=dict) # 岛屿的进化方向 这里暂定空字典 在后面添加 负责指导岛屿的总体进化方向 安全 e.g. {"island_id":"evolution_direction"}
-
-
-    best_program:str = Field(default="") # 最好的程序code 全局只有一个 随时更新 默认reducer
-    best_program_id:str = Field(default="") # 最好的程序的id 全局只有一个 随时更新 默认reducer
-    best_metrics:Dict[str,Any] = Field(default_factory=dict) # 最好的程序的指标 随时更新 默认reducer
-
-    best_program_each_island:Annotated[Dict[str,str],reducer_tuple] = Field(default_factory=dict) # 每个岛屿上最好的程序id  岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
-    generation_count:Annotated[Dict[str,int],reducer_tuple] = Field(default_factory=dict) # 每一个岛屿当前的代数  岛屿内部更新 安全 e.g. {"island_id":0}
-    archive:Annotated[ThreadSafePrograms,reducer_for_safe_container_all_programs] = Field(default_factory=ThreadSafePrograms) # 精英归档 里面存放Program对象 各个岛屿上的精英归档汇总在这个dict中 随时更新
-
-    island_programs: Annotated[Dict[str,ThreadSafePrograms],reducer_for_safe_container_island_programs] = Field(default_factory=dict) # 各个岛屿上的程序id 岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
-    # 使用线程安全的程序管理器
-    all_programs: Annotated[ThreadSafePrograms, reducer_for_safe_container_all_programs] = Field(default_factory=ThreadSafePrograms)
-    newest_programs: Annotated[Dict[str, str],reducer_tuple] = Field(default_factory=dict) # 各个岛屿上最新的程序id 岛屿内部更新 安全 e.g. {"island_id":"program_id"}
-    island_generation_count:Annotated[Dict[str,int],reducer_tuple] = Field(default_factory=dict) # 各个岛屿当前的代数 岛屿内部更新 安全 e.g. {"island_id":0}
-
+    iteration:int = Field(default=0)
+    # 全局共享状态 
+    # 对于const参数 就算是合并节点 也不会更新  
+    init_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 初始程序的id 全局只有一个 这个值不会被更新 const
+    evaluation_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 评估程序的code 全局只有一个 这个值不会被更新 const
+    language:Annotated[str,reducer_for_single_parameter] = Field(default="python") # 编程语言 const
+    file_extension:Annotated[str,reducer_for_single_parameter] = Field(default="py") # 文件扩展名 const
+    num_islands:Annotated[int,reducer_for_single_parameter] = Field(default=0) # 岛屿的数量  const
+    islands_id:Annotated[List[str],reducer_for_single_parameter] = Field(default_factory=list) # 岛屿的id const 岛屿的id是全局唯一的 不会被更新 
+    
+    best_program: Annotated[Program, reducer_best_program] = Field(default_factory=Program)
     #交流会相关
     generation_count_in_meeting:int = Field(default=0) # 交流会进行的次数
-    time_of_meeting:int = Field(default=10) # 每当各个岛屿迭代了time_of_meeting次 就会进行一次交流会 安全
-
-    #岛屿内部进化有关:
-    current_program_id: Annotated [Dict[str,str],reducer_tuple] = Field(default_factory=dict) # 各个岛屿上当前的程序id(child id) 岛屿内部更新 安全 e.g. {"island_id":"program_id"}
-    current_program_code: Annotated[Dict[str,str],reducer_tuple] = Field(default_factory=dict) # 各个岛屿上当前的程序code 岛屿内部更新 安全 e.g. {"island_id":"program_code"}
-    sample_program_id: Annotated[Dict[str,str], reducer_tuple] = Field(default_factory=dict) # 各个岛屿上采样的父代程序id 岛屿内部更新 安全 e.g. {"island_id":"program_id"}
-    sample_inspirations: Annotated[Dict[str,List[str]], reducer_tuple] = Field(default_factory=dict) # 各个岛屿上采样的程序的灵感程序id 岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
-    prompt:Annotated[Dict[str,str],reducer_tuple]=Field(default_factory=dict) # 各个岛屿上用于构建的提示词 岛屿内部更新 安全 e.g. {"island_id":"prompt"}
-    sample_top_programs:Annotated[Dict[str,List[str]],reducer_tuple]=Field(default_factory=dict) # 各个岛屿上采样的最好的程序id 岛屿内部更新 安全 e.g. {"island_id":["program_id1","program_id2"]}
-    feature_map: Annotated[Dict[str,Any], reducer_tuple] = Field(default_factory=dict) # 全部程序中的特征坐标 全局更新 e.g{"program_id":[0,1,2,-1]}
-
-
-    llm_generate_success:Annotated[Dict[str,bool],reducer_tuple]=Field(default_factory=dict) # 各个岛屿上llm生成是否成功 岛屿内部更新 安全 e.g. {"island_id":True}
-    llm_message_diff:Annotated[Dict[str,str],reducer_tuple]=Field(default_factory=dict) # llm返回的修改代码的建议
-    llm_message_rewrite:Annotated[Dict[str,str],reducer_tuple]=Field(default_factory=dict) # llm返回的修改代码的重写部分  
-    llm_message_suggestion:Annotated[Dict[str,str],reducer_tuple]=Field(default_factory=dict) # llm返回的修改代码的diff部分
-    llm_change_summary:Annotated[Dict[str,str],reducer_tuple]=Field(default_factory=dict) # 修改代码的总结 
+    # 以下内容在每一次meeting后更新 随即下放到每一个岛屿 
     
+    # 精英归档 里面存放Program对象 各个岛屿上的精英归档汇总在这个dict中 随时更新
+    archive:Annotated[Programs_container,reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container) # 精英归档 里面存放Program对象 各个岛屿上的精英归档汇总在这个dict中 随时更新
+    # 程序管理器
+    all_programs: Annotated[Programs_container, reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container)
+    # 全部程序的特征坐标 
+    feature_map:Annotated[Dict[str,Any],reducer_for_feature_map] = Field(default_factory=dict)
     
-    lock : bool = Field(default=False) # 是否锁定  在上锁时无法对state进行更新
+    islands:Annotated[Dict[str,IslandState],reducer_for_single_parameter] = Field(default_factory=dict)
     
+
     
 
     def to_dict(self)->Dict[str,Any]:
         return self.model_dump()
 
-    def from_dict(self,data:Dict[str,Any])->"GraphState":
+    @classmethod
+    def from_dict(cls,data:Dict[str,Any])->"GraphState":
         return GraphState(**data)
     
-    
-        
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")

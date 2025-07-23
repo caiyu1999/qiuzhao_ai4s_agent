@@ -8,7 +8,7 @@ import sys
 import importlib.util
 import logging
 import time 
-logger = logging.getLogger(__name__)
+#logger = logging.get#logger(__name__)
 import tempfile
 import asyncio
 import traceback 
@@ -83,7 +83,7 @@ def _load_evaluation_function(evaluation_file:str) -> Callable:
             eval_dir = os.path.dirname(os.path.abspath(evaluation_file))
             if eval_dir not in sys.path:
                 sys.path.insert(0, eval_dir)
-                logger.debug(f"Added {eval_dir} to Python path for local imports")
+                #logger.debug(f"Added {eval_dir} to Python path for local imports")
 
             spec = importlib.util.spec_from_file_location("evaluation_module", evaluation_file)
             if spec is None or spec.loader is None:
@@ -99,10 +99,10 @@ def _load_evaluation_function(evaluation_file:str) -> Callable:
                 )
 
             evaluate_function = module.evaluate
-            logger.info(f"Successfully loaded evaluation function from {evaluation_file}")
+            #logger.info(f"Successfully loaded evaluation function from {evaluation_file}")
             return evaluate_function
         except Exception as e:
-            logger.error(f"Error loading evaluation function: {str(e)}")
+            #logger.error(f"Error loading evaluation function: {str(e)}")
             raise
 
 def passes_threshold(metrics: Dict[str, float], threshold: float) -> bool:
@@ -127,7 +127,7 @@ def passes_threshold(metrics: Dict[str, float], threshold: float) -> bool:
             try:
                 valid_metrics.append(float(value))
             except (TypeError, ValueError):
-                logger.warning(f"Skipping non-numeric metric: {name}={value}")
+                #logger.warning(f"Skipping non-numeric metric: {name}={value}")
                 continue
 
     if not valid_metrics:
@@ -149,7 +149,8 @@ async def direct_evaluate(evaluate_program_path: str,program_path: str,config:Co
         asyncio.TimeoutError: If evaluation exceeds timeout
         Exception: If evaluation function raises an exception
     """
-
+    #logger.info(f"开始直接评估程序: {program_path}")
+    #logger.info(f"评估文件: {evaluate_program_path}")
     # Create a coroutine that runs the evaluation function in an executor
     async def run_evaluation():
         loop = asyncio.get_event_loop()
@@ -160,7 +161,7 @@ async def direct_evaluate(evaluate_program_path: str,program_path: str,config:Co
 
     # Validate result
     if not isinstance(result, dict):
-        logger.warning(f"Evaluation returned non-dictionary result: {result}")
+        #logger.warning(f"Evaluation returned non-dictionary result: {result}")
         return EvaluationResult(metrics={"error": 0.0})
 
     return EvaluationResult.from_dict(result)
@@ -180,12 +181,14 @@ async def cascade_evaluate(
         Dictionary of metrics or EvaluationResult with metrics and artifacts
     """
     # Import the evaluation module to get cascade functions if they exist
+    #logger.info(f"开始分级评估程序: {program_path}")
+    #logger.info(f"评估文件: {evaluation_file}")
     try:
         # Add the evaluation file's directory to Python path so it can import local modules
         eval_dir = os.path.dirname(os.path.abspath(evaluation_file))
         if eval_dir not in sys.path:
             sys.path.insert(0, eval_dir)
-            logger.debug(f"Added {eval_dir} to Python path for cascade evaluation")
+            #logger.debug(f"Added {eval_dir} to Python path for cascade evaluation")
 
         spec = importlib.util.spec_from_file_location("evaluation_module", evaluation_file)
         if spec is None or spec.loader is None:
@@ -209,7 +212,7 @@ async def cascade_evaluate(
             stage1_eval_result = EvaluationResult.from_dict(stage1_result)
             
         except asyncio.TimeoutError:
-            logger.warning(f"Stage 1 evaluation timed out after {config.evaluator.timeout}s")
+            #logger.warning(f"Stage 1 evaluation timed out after {config.evaluator.timeout}s")
             return EvaluationResult(
                 metrics={"stage1_passed": 0.0, "error": 0.0, "timeout": True},
                 artifacts={
@@ -219,7 +222,7 @@ async def cascade_evaluate(
             )
             
         except Exception as e:
-            logger.error(f"Error in stage 1 evaluation: {str(e)}")
+            #logger.error(f"Error in stage 1 evaluation: {str(e)}")
             # Capture stage 1 failure as artifacts
             return EvaluationResult(
                 metrics={"stage1_passed": 0.0, "error": 0.0},
@@ -250,7 +253,7 @@ async def cascade_evaluate(
             stage2_result = await asyncio.wait_for(run_stage2(), timeout=config.evaluator.timeout)
             stage2_eval_result = EvaluationResult.from_dict(stage2_result)
         except asyncio.TimeoutError:
-            logger.warning(f"Stage 2 evaluation timed out after {config.evaluator.timeout}s")
+            #logger.warning(f"Stage 2 evaluation timed out after {config.evaluator.timeout}s")
             # Capture stage 2 failure, but keep stage 1 results
             stage1_eval_result.artifacts.update(
                 {
@@ -262,7 +265,7 @@ async def cascade_evaluate(
             stage1_eval_result.metrics["timeout"] = True
             return stage1_eval_result
         except Exception as e:
-            logger.error(f"Error in stage 2 evaluation: {str(e)}")
+            #logger.error(f"Error in stage 2 evaluation: {str(e)}")
             # Capture stage 2 failure, but keep stage 1 results
             stage1_eval_result.artifacts.update(
                 {
@@ -314,7 +317,7 @@ async def cascade_evaluate(
             stage3_result = await asyncio.wait_for(run_stage3(), timeout=config.evaluator.timeout)
             stage3_eval_result = EvaluationResult.from_dict(stage3_result)
         except asyncio.TimeoutError:
-            logger.warning(f"Stage 3 evaluation timed out after {config.evaluator.timeout}s")
+            #logger.warning(f"Stage 3 evaluation timed out after {config.evaluator.timeout}s")
             # Capture stage 3 failure, but keep previous results
             merged_result.artifacts.update(
                 {
@@ -326,7 +329,7 @@ async def cascade_evaluate(
             merged_result.metrics["timeout"] = True
             return merged_result
         except Exception as e:
-            logger.error(f"Error in stage 3 evaluation: {str(e)}")
+            #logger.error(f"Error in stage 3 evaluation: {str(e)}")
             # Capture stage 3 failure, but keep previous results
             merged_result.artifacts.update(
                 {
@@ -348,7 +351,7 @@ async def cascade_evaluate(
         return merged_result
 
     except Exception as e:
-        logger.error(f"Error in cascade evaluation: {str(e)}")
+        #logger.error(f"Error in cascade evaluation: {str(e)}")
         # Return proper cascade failure result instead of re-raising
         return EvaluationResult(
             metrics={"stage1_passed": 0.0, "error": 0.0},

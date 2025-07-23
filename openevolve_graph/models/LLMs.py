@@ -7,7 +7,7 @@ import logging
 from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 import asyncio
-
+import time
 
 class LLMs:
     def __init__(self, config: Config):
@@ -39,23 +39,26 @@ class LLMs:
     def sample_model(self):
         return random.choices(self.models, weights=self.weights, k=1)[0]
 
-    async def call_api(self, model, prompt):
+    def call_api(self, model, prompt):
         """带超时和重试机制的API调用"""
         for i in range(self.retries):
             try:
                 # 添加超时控制
-                result = await asyncio.wait_for(
-                    model.ainvoke(prompt), 
-                    timeout=self.timeout
-                )
+                # logger.info(f"尝试获得response")
+                # result = await asyncio.wait_for(
+                #     model.ainvoke(prompt), 
+                #     timeout=self.timeout
+                # )
+                result = model.invoke(prompt)
                 # 若成功生成 则返回结果
+                # logger.info(f"LLMs.call_api 成功生成结果: {result}")
                 return result
             
             except asyncio.TimeoutError:
                 # 若超时 则重试
                 logger.error(f"Timeout after {self.timeout} seconds on attempt {i+1}")
                 if i < self.retries - 1:  # 不是最后一次尝试
-                    await asyncio.sleep(self.retry_delay)
+                    time.sleep(self.retry_delay)
                     continue 
                 else:
                     raise TimeoutError(f"Model invocation timed out after {self.retries} attempts")
@@ -63,44 +66,48 @@ class LLMs:
                 # 若失败 则重试
                 logger.error(f"Error invoking model on attempt {i+1}: {e}")
                 if i < self.retries - 1:  # 不是最后一次尝试
-                    await asyncio.sleep(self.retry_delay)
+                    time.sleep(self.retry_delay)
                     continue 
                 else:
                     raise
         
-    async def invoke(self, prompt: str, 
+    def invoke(self, prompt: str, 
                      structure: Optional[Type[BaseModel] | None], 
                      key: Optional[Union[str, List[str]] | None]
                      ) -> Union[str, BaseModel, None, Dict[str, Any]]:
         model = self.sample_model()
+        #logger.info(f"LLMs.invoke 使用的模型: {model}")
         if structure is not None:
             model = model.with_structured_output(structure)
             if key is not None:
                 try:
-                    result = await self.call_api(model, prompt)
+                    # logger.info(f"LLMs.invoke 开始调用模型: {model}")
+                    result = self.call_api(model, prompt)
                     if result is not None and isinstance(key, list):
                         return {k: getattr(result, k) for k in key}
                     elif result is not None and isinstance(key, str):
                         return getattr(result, key)
                     return None
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
             else:
                 try:
-                    result = await self.call_api(model, prompt)
+                    # logger.info(f"LLMs.invoke 开始调用模型: {model}")
+                    result = self.call_api(model, prompt)
                     return result
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
         else:
             try:
-                result = await self.call_api(model, prompt)
+                result = self.call_api(model, prompt)
+                # logger.info(f"LLMs.invoke 成功生成结果: {result}")
                 if result is not None and hasattr(result, 'content'):
                     return result.content
                 return str(result) if result is not None else None
             except Exception as e:
-                logger.error(f"Error invoking model: {e}")
+                #logger.error(f"Error invoking model: {e}")
                 return None
 
 
@@ -147,13 +154,13 @@ class LLMs_evalutor():
                 )
                 return result
             except asyncio.TimeoutError:
-                logger.error(f"Timeout after {self.timeout[0]} seconds on attempt {i+1}")
+                #logger.error(f"Timeout after {self.timeout[0]} seconds on attempt {i+1}")
                 if i < self.retries[0] - 1:  # 不是最后一次尝试
                     await asyncio.sleep(self.retry_delay[0])
                 else:
                     return None
             except Exception as e:
-                logger.error(f"Error invoking model on attempt {i+1}: {e}")
+                #logger.error(f"Error invoking model on attempt {i+1}: {e}")
                 if i < self.retries[0] - 1:  # 不是最后一次尝试
                     await asyncio.sleep(self.retry_delay[0])
                 else:
@@ -174,9 +181,11 @@ class LLMs_evalutor():
             models = [model.with_structured_output(structure) for model in models]
             if key is not None:
                 try: #并行invoke
+                    # logger.info(f"LLMs_evalutor.invoke_parallel 开始调用模型: {models}")
                     results = await asyncio.gather(*[(self._invoke_single(model,prompt)) for model in models])
                     # 检查results中非None的 个数 如果>=1 则返回结果即可 否则报错
                     results = [result for result in results if result is not None]
+                    # logger.info(f"LLMs_evalutor.invoke_parallel 成功生成结果: {results}")
                     if len(results) == 0:
                         raise ValueError("No results returned from models")
                     
@@ -189,7 +198,7 @@ class LLMs_evalutor():
                             return {k:[getattr(result, k) for result in results] for k in key}
 
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
             else:#若没有key 则返回每一个模型的输出即可 这里的每一个输出都是一个BaseModel
                 try:
@@ -199,7 +208,7 @@ class LLMs_evalutor():
                         raise ValueError("No results returned from models")
                     return results
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
         else:
             try:#如果structure为None 则返回每一个模型的输出即可 这里的每一个输出都是一个str
@@ -209,7 +218,7 @@ class LLMs_evalutor():
                     raise ValueError("No results returned from models")
                 return results
             except Exception as e:
-                logger.error(f"Error invoking model: {e}")
+                #logger.error(f"Error invoking model: {e}")
                 return None
         
     async def invoke(self, prompt: str, structure: Optional[Type[BaseModel] | None], key: Optional[Union[str, List[str]] | None]) -> Union[str, BaseModel, None, Dict[str, Any]]:
@@ -225,14 +234,14 @@ class LLMs_evalutor():
                         return getattr(result, key)
                     return None
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
             else:
                 try:
                     result = await self.call_api(model, prompt)
                     return result
                 except Exception as e:
-                    logger.error(f"Error invoking model: {e}")
+                    #logger.error(f"Error invoking model: {e}")
                     return None
         else:
             try:
@@ -241,23 +250,22 @@ class LLMs_evalutor():
                     return result.content
                 return str(result) if result is not None else None
             except Exception as e:
-                logger.error(f"Error invoking model: {e}")
+                #logger.error(f"Error invoking model: {e}")
                 return None
 
 
-# if __name__ == "__main__":
-    # config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
-    # llms = LLMs(config)
-    # class Test(BaseModel):  
-    #     answer: str = Field(default="", description="The answer to the question")
-    #     age: int = Field(default=0, description="The age of the person")
+if __name__ == "__main__":
+    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
+    llms = LLMs_evalutor(config)
+    class Test(BaseModel):  
+        answer: str = Field(default="", description="The answer to the question")
+        age: int = Field(default=0, description="The age of the person")
         
-    # print(asyncio.run(llms.invoke("Hello, how are you?", Test, ["answer", "age"])))
-    # list_a = []
-    # list_a.append(None)
-    # print(list_a)        
-    # test_dict = {"a":10}
-    # print(test_dict.a)
+    print(asyncio.run(llms.invoke("Hello, how are you?", Test, ["answer", "age"])))
+    list_a = []
+    list_a.append(None)
+    print(list_a)        
+    test_dict = {"a":10}
         
         
         

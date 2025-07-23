@@ -49,6 +49,12 @@ class Config:
     # General settings
     programs_save_path: Optional[str] = None  # Path to store programs on disk
     in_memory: bool = True
+    
+    random_meeting:bool = False # 是否开启随机meeting 如果开启 则每次meeting后 下一次meeting的时间随机 
+    meeting_interval:int = 2 # 每次meeting的间隔 如果开启随机meeting 则每次meeting后 下一次meeting的时间随机 
+    meeting_interval_list: list = field(default_factory=lambda: [2,4,8,16]) # meeting的间隔列表  如果未到达max_iterations 则使用最后的值 
+    
+    
 
 
     @classmethod
