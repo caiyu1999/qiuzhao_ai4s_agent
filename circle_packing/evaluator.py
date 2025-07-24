@@ -41,7 +41,7 @@ def validate_packing(centers, radii):
         x, y = centers[i]
         r = radii[i]
         if x - r < -1e-6 or x + r > 1 + 1e-6 or y - r < -1e-6 or y + r > 1 + 1e-6:
-            print(f"Circle {i} at ({x}, {y}) with radius {r} is outside the unit square")
+            # print(f"Circle {i} at ({x}, {y}) with radius {r} is outside the unit square")
             return False
 
     # Check for overlaps
@@ -49,7 +49,7 @@ def validate_packing(centers, radii):
         for j in range(i + 1, n):
             dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
             if dist < radii[i] + radii[j] - 1e-6:  # Allow for tiny numerical errors
-                print(f"Circles {i} and {j} overlap: dist={dist}, r1+r2={radii[i]+radii[j]}")
+                # print(f"Circles {i} and {j} overlap: dist={dist}, r1+r2={radii[i]+radii[j]}")
                 return False
 
     return True
@@ -81,8 +81,8 @@ import traceback
 sys.path.insert(0, os.path.dirname('{program_path}'))
 
 # Debugging info
-print(f"Running in subprocess, Python version: {{sys.version}}")
-print(f"Program path: {program_path}")
+# print(f"Running in subprocess, Python version: {{sys.version}}")
+# print(f"Program path: {program_path}")
 
 try:
     # Import the program
@@ -91,9 +91,9 @@ try:
     spec.loader.exec_module(program)
     
     # Run the packing function
-    print("Calling run_packing()...")
+    # print("Calling run_packing()...")
     centers, radii, sum_radii = program.run_packing()
-    print(f"run_packing() returned successfully: sum_radii = {{sum_radii}}")
+    # print(f"run_packing() returned successfully: sum_radii = {{sum_radii}}")
 
     # Save results to a file
     results = {{
@@ -104,15 +104,15 @@ try:
 
     with open('{temp_file.name}.results', 'wb') as f:
         pickle.dump(results, f)
-    print(f"Results saved to {temp_file.name}.results")
+    # print(f"Results saved to {temp_file.name}.results")
     
 except Exception as e:
     # If an error occurs, save the error instead
-    print(f"Error in subprocess: {{str(e)}}")
+    # print(f"Error in subprocess: {{str(e)}}")
     traceback.print_exc()
     with open('{temp_file.name}.results', 'wb') as f:
         pickle.dump({{'error': str(e)}}, f)
-    print(f"Error saved to {temp_file.name}.results")
+    # print(f"Error saved to {temp_file.name}.results")
 """
         temp_file.write(script.encode())
         temp_file_path = temp_file.name
@@ -130,9 +130,10 @@ except Exception as e:
             exit_code = process.returncode
 
             # Always print output for debugging purposes
-            print(f"Subprocess stdout: {stdout.decode()}")
+            # print(f"Subprocess stdout: {stdout.decode()}")
             if stderr:
-                print(f"Subprocess stderr: {stderr.decode()}")
+                # print(f"Subprocess stderr: {stderr.decode()}")
+                pass 
 
             # Still raise an error for non-zero exit codes, but only after printing the output
             if exit_code != 0:
@@ -203,9 +204,9 @@ def evaluate(program_path):
         # Check shape and size
         shape_valid = centers.shape == (26, 2) and radii.shape == (26,)
         if not shape_valid:
-            print(
-                f"Invalid shapes: centers={centers.shape}, radii={radii.shape}, expected (26, 2) and (26,)"
-            )
+            # print(
+            #     f"Invalid shapes: centers={centers.shape}, radii={radii.shape}, expected (26, 2) and (26,)"
+            # )
             valid = False
 
         # Calculate sum
@@ -213,7 +214,8 @@ def evaluate(program_path):
 
         # Make sure reported_sum matches the calculated sum
         if abs(sum_radii - reported_sum) > 1e-6:
-            print(f"Warning: Reported sum {reported_sum} doesn't match calculated sum {sum_radii}")
+            # print(f"Warning: Reported sum {reported_sum} doesn't match calculated sum {sum_radii}")
+            pass 
 
         # Target ratio (how close we are to the target)
         target_ratio = sum_radii / TARGET_VALUE if valid else 0.0
@@ -224,9 +226,9 @@ def evaluate(program_path):
         # Combined score - higher is better
         combined_score = target_ratio * validity
 
-        print(
-            f"Evaluation: valid={valid}, sum_radii={sum_radii:.6f}, target={TARGET_VALUE}, ratio={target_ratio:.6f}, time={eval_time:.2f}s"
-        )
+        # print(
+        #     f"Evaluation: valid={valid}, sum_radii={sum_radii:.6f}, target={TARGET_VALUE}, ratio={target_ratio:.6f}, time={eval_time:.2f}s"
+        # )
 
         return {
             "sum_radii": float(sum_radii),
@@ -237,7 +239,7 @@ def evaluate(program_path):
         }
 
     except Exception as e:
-        print(f"Evaluation failed completely: {str(e)}")
+        # print(f"Evaluation failed completely: {str(e)}")
         traceback.print_exc()
         return {
             "sum_radii": 0.0,
@@ -267,7 +269,8 @@ def evaluate_stage1(program_path):
             # Validate solution (shapes and constraints)
             shape_valid = centers.shape == (26, 2) and radii.shape == (26,)
             if not shape_valid:
-                print(f"Invalid shapes: centers={centers.shape}, radii={radii.shape}")
+                # print(f"Invalid shapes: centers={centers.shape}, radii={radii.shape}")
+                pass 
                 return {"validity": 0.0, "error": "Invalid shapes"}
 
             valid = validate_packing(centers, radii)
@@ -290,16 +293,16 @@ def evaluate_stage1(program_path):
             }
 
         except TimeoutError as e:
-            print(f"Stage 1 evaluation timed out: {e}")
+            # print(f"Stage 1 evaluation timed out: {e}")
             return {"validity": 0.0, "combined_score": 0.0, "error": "Timeout"}
         except Exception as e:
-            print(f"Stage 1 evaluation failed: {e}")
-            print(traceback.format_exc())
+            # print(f"Stage 1 evaluation failed: {e}")
+            # print(traceback.format_exc())
             return {"validity": 0.0, "combined_score": 0.0, "error": str(e)}
 
     except Exception as e:
-        print(f"Stage 1 evaluation failed completely: {e}")
-        print(traceback.format_exc())
+        # print(f"Stage 1 evaluation failed completely: {e}")
+        # print(traceback.format_exc())
         return {"validity": 0.0, "combined_score": 0.0, "error": str(e)}
 
 

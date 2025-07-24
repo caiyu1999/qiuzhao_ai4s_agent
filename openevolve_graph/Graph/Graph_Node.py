@@ -1445,3 +1445,38 @@ class node_update(SyncNode):
 
 
 
+
+
+if __name__ == "__main__": 
+    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
+    node = node_init_status(config)
+    state = GraphState()
+    from langgraph.graph import StateGraph ,START,END 
+    from langgraph.checkpoint.memory import InMemorySaver
+
+    graph_builder = StateGraph(GraphState)
+    graph_builder.add_node("init_status",node_init_status(config))
+    graph_builder.add_edge(START,"init_status")
+    graph_builder.add_edge("init_status",END)
+    graph = graph_builder.compile(checkpointer=InMemorySaver())
+    
+    node = node_init_status(config)
+    
+    config = {"configurable": {"thread_id": "1"}}
+    result = graph.invoke(state, config)
+    history = list(graph.get_state_history(config))
+    
+    # import pdb;pdb.set_trace()
+    
+    state_updated = history[0].values 
+    
+    new_state = state.from_dict(state_updated)
+    
+
+    
+    
+    
+    
+    
+    
+    
