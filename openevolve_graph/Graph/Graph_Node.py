@@ -10,6 +10,7 @@ from openevolve_graph.Graph.Graph_Node_ABC import NodeResult,SyncNode,AsyncNode
 from openevolve_graph.Graph.Graph_state import GraphState, IslandStatus ,IslandState
 from openevolve_graph.Config import Config
 from openevolve_graph.program import Program
+from openevolve_graph.visualization.socket_sc import SimpleClient
 from openevolve_graph.utils.utils import (
     parse_full_rewrite,
     safe_numeric_average,
@@ -55,20 +56,44 @@ import asyncio
 import os
 logger = logging.getLogger(__name__)
 
-'''
-部分节点进入前要上锁
-这些节点通常会使用全局共享信息
-这些节点有：
-1.node_update 
 
-'''
+
+
 
 class node_init_status(AsyncNode):
     '''
     初始化图的状态
+    
+    功能描述：
+    - 验证配置参数的有效性（程序路径、评估器路径、岛屿数量等）
+    - 加载并评估初始程序，获取初始指标
+    - 创建初始Program对象，包含代码、语言、指标等信息
+    - 初始化所有岛屿的状态，为每个岛屿分配初始程序
+    - 设置全局数据结构（程序库、归档、特征映射等）
+    
+    更新的状态字段：
+    - init_program: 初始程序ID
+    - best_program: 最佳程序对象
+    - best_program_id: 最佳程序ID
+    - best_metrics: 最佳程序指标
+    - num_islands: 岛屿数量
+    - archive: 精英程序归档
+    - all_programs: 全局程序库
+    - evaluation_program: 评估器路径
+    - language: 编程语言
+    - file_extension: 文件扩展名
+    - islands_id: 岛屿ID列表
+    - feature_map: 特征映射字典
+    - islands: 岛屿状态字典
+    
+    输入要求：
+    - GraphState: 空的图状态对象
+    
+    输出结果：
+    - Dict: 包含初始化后的所有状态字段
     '''
 
-    def __init__(self,config:Config):
+    def __init__(self,config:Config,next_meeting:int):
         self.config = config
         self.num_islands = config.island.num_islands
         self.prompt_sampler = PromptSampler_langchain(config=config.prompt)
@@ -79,6 +104,7 @@ class node_init_status(AsyncNode):
         else:
             self.structure = None
             self.key = None
+        self.next_meeting = next_meeting
 
     async def execute_async(self, state: GraphState) -> NodeResult | Dict[str, Any]:
         config = self.config
@@ -157,6 +183,8 @@ class node_init_status(AsyncNode):
             temp_Island_state.archive.add_program(init_program.id,init_program)
             temp_Island_state.language = language
             temp_Island_state.all_best_program = init_program
+            temp_Island_state.next_meeting = self.next_meeting
+            temp_Island_state.now_meeting = 0
             islandstate_dict[island_id] = temp_Island_state
 
             
@@ -187,10 +215,28 @@ class node_init_status(AsyncNode):
             "feature_map":feature_map,
             "islands":islandstate_dict,
             }
+        
     def __call__(self,state:GraphState):
         # #logger.info("node_init_status: __call__ invoked")
         # logger.info("node_init_status: 开始执行 execute")
         result = self.execute(state)
+        
+        # 发送消息到可视化服务器
+        # try:
+        #     import json
+        #     client = SimpleClient(port=self.port)
+        #     message = {
+        #         "node_name": "init_status",
+        #         "status": "completed",
+        #         "data": {
+        #             "num_islands": result.get("num_islands", 0) if isinstance(result, dict) else 0,
+        #             "language": result.get("language", "unknown") if isinstance(result, dict) else "unknown"
+        #         }
+        #     }
+        #     client.send_message(json.dumps(message))
+        # except Exception as e:
+        #     logger.warning(f"发送可视化消息失败: {e}")
+        
         # logger.info(f"node_init_status: 执行结束")
         return result
     
@@ -436,18 +482,39 @@ class node_init_status(AsyncNode):
     
 class node_evaluate(AsyncNode):
     '''
+    程序评估节点
     
-    + 在设定island_id时 会评估岛屿上的最新程序(current_program) 将这个对象保存在state中的current_program中
+    功能描述：
+    - 评估岛屿上的最新程序（latest_program）的性能指标
+    - 使用配置的评估器（直接评估或分级评估）对程序进行测试
+    - 可选启用LLM反馈评估，获取代码质量指标
+    - 处理评估超时和异常情况，记录相关工件信息
+    - 创建包含评估结果的新Program对象
     
-    这个节点会改变的key: 
-    current_program
-    status
-    evaluate_success
+    更新的状态字段：
+    - status: 节点状态更新为EVALUATE_CHILD
+    - latest_program: 包含评估结果的新Program对象
+    - evaluate_success: 评估是否成功的布尔值
+    - iteration: 如果评估失败，迭代次数+1
+    - now_meeting: 如果评估失败，会议进度+1
+    - next_meeting: 如果评估失败，下次会议时间-1
+    
+    输入要求：
+    - IslandState: 包含latest_program的岛屿状态
+    
+    输出结果：
+    - Dict: 包含评估状态和结果的字典
+    
+    异常处理：
+    - 评估失败时返回None，触发重新采样机制
+    - 超时情况下记录超时工件信息
+    - 异常情况下记录错误堆栈信息
     '''
     def __init__(self,config:Config):
         self.config = config
         self.llm_evalutor = LLMs_evalutor(config)
         self.prompt_sampler = PromptSampler_langchain(config=config.prompt)
+        self.client = None
         if self.config.evaluator.use_llm_feedback: #如果是llm反馈评估 那么使用
             self.structure = ResponseFormatter_template_evaluator
             self.key = ["readability","maintainability","efficiency","other_information"]
@@ -488,6 +555,7 @@ class node_evaluate(AsyncNode):
             current_program = Program(
                     id=current_program_id,
                     code=current_program,
+                    island_id=state.id,
                     language=state.language,
                     parent_id=state.sample_program.id,
                     generation=state.iteration,
@@ -503,27 +571,48 @@ class node_evaluate(AsyncNode):
             
             return current_program
         except Exception as e:
-            #logger.error(f"node_evaluate: 评估发生异常: {e}")
+            logger.error(f"node_evaluate: 评估发生异常: {e}")
             return None
     def __call__(self,state:IslandState):
         '''
         这个节点计算初始prgram的信息 并更新current_program
         '''
         logger.info(f"Island:{state.id} START node_evaluate")
-        current_program = self.execute(state)
+        current_program = asyncio.run(self.execute_async(state))
+        # logger.info(f"current_program:{current_program}")
         logger.info(f"Island:{state.id} END node_evaluate")
+        if self.client is None:
+            self.client = SimpleClient(self.config.port)
+        update_dict = {}
         if current_program is None:
-            #此时应该进入循环节点 重新评估/进行下一轮
+            logger.error(f"Island:{state.id} node_evaluate: 评估发生异常")
             #目前暂时进行下一轮
-            return {
+            update_dict = {
                 "status":IslandStatus.EVALUATE_CHILD,
                 "evaluate_success":False,
+                "now_meeting":state.now_meeting+1,
+                "next_meeting":state.next_meeting-1,
+                "iteration":state.iteration+1,
             }
-        return {
+            self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+            })
+            return update_dict
+        update_dict = {
             "status":IslandStatus.EVALUATE_CHILD,
             "latest_program":current_program,
             "evaluate_success":True,
         }
+        
+        
+        self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+        
+        return update_dict
         
         
     async def _llm_evaluate(self, program_code: str) -> Dict[str, Any]:
@@ -758,16 +847,42 @@ class node_evaluate(AsyncNode):
 
 class node_sample_parent_inspiration(SyncNode):
     '''
-    采样父代程序与灵感程序
+    采样父代程序与灵感程序节点
     
-    此节点会更新的key: sample_program_id,sample_inspirations,status
+    功能描述：
+    - 使用多种策略采样父代程序：探索性采样、利用性采样、随机采样
+    - 根据精英比例、多样性和性能采样灵感程序
+    - 支持MAP-Elites特征网格的多样性维护
+    - 平衡探索与利用，避免过早收敛
     
+    采样策略：
+    1. 探索性采样：从当前岛屿随机选择，维持多样性
+    2. 利用性采样：从精英归档选择，利用优秀基因
+    3. 随机采样：完全随机选择，增加不确定性
+    
+    灵感程序来源：
+    1. 全局最优程序（如果与父代不同）
+    2. 顶级程序（按精英选择比例）
+    3. 多样性程序（从特征网格附近采样）
+    4. 随机程序（填充剩余位置）
+    
+    更新的状态字段：
+    - sample_program: 选中的父代程序对象
+    - sample_inspirations: 灵感程序ID列表
+    - status: 节点状态更新为SAMPLE
+    
+    输入要求：
+    - IslandState: 包含程序库和归档的岛屿状态
+    
+    输出结果：
+    - Dict: 包含采样结果的字典
     '''
     def __init__(self,config:Config,n:int=5,island_id:str = '0',metric:Optional[str] = None):
         self.config = config
         self.n = n
         self.metric = metric
         self.island_id = f"Island_{island_id}" #成员变量的名称
+        self.client = None
     def execute(self,state:IslandState)->Tuple[Program,List[Program]]:
         # state_island:IslandState = getattr(state, self.island_id)
         try:
@@ -800,11 +915,19 @@ class node_sample_parent_inspiration(SyncNode):
         # state_island.status = IslandStatus.SAMPLE
         logger.info(f"Island:{state.id} END node_sample_parent_inspiration")
         # 只返回需要更新的字段，让LangGraph的reducer处理并发
-        return {
-           "sample_program":parent_program,
-           "sample_inspirations":inspirations,
-           "status":IslandStatus.SAMPLE
+        if self.client is None:
+            self.client = SimpleClient(self.config.port)
+        update_dict = {
+            "sample_program":parent_program,
+            "sample_inspirations":inspirations,
+            "status":IslandStatus.SAMPLE
         }
+        self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+        return update_dict
 
     def _sample_inspirations(self,state:IslandState,parent_id:str):
         '''
@@ -1032,17 +1155,44 @@ class node_sample_parent_inspiration(SyncNode):
 
 class node_build_prompt(SyncNode):
     '''
-    这个节点根据state中的信息来构建prompt
-    注意在初始化的时候 inspiration可能为[]
-
-    此节点会更新的key: prompt,status
-
+    构建LLM提示词节点
+    
+    功能描述：
+    - 根据岛屿状态信息构建用于LLM生成的提示词
+    - 整合当前程序、父代程序、历史程序信息
+    - 包含顶级程序和灵感程序作为进化参考
+    - 支持基于差异和基于重写两种进化模式
+    - 构建包含程序工件、指标、语言等上下文信息的完整提示
+    
+    提示词组成部分：
+    - current_program: 当前程序代码
+    - parent_program: 父代程序代码和指标
+    - previous_programs: 前三代程序历史
+    - top_programs: 按性能排序的顶级程序（前5个）
+    - inspirations: 灵感程序列表
+    - program_artifacts: 程序相关工件信息
+    - evolution_round: 当前演化轮次
+    - language: 编程语言类型
+    
+    更新的状态字段：
+    - prompt: 构建好的LLM提示词字符串
+    - status: 节点状态更新为BUILD_PROMPT
+    
+    输入要求：
+    - IslandState: 包含程序信息和采样结果的岛屿状态
+    
+    输出结果：
+    - Dict: 包含提示词和状态的字典
+    
+    注意事项：
+    - 初始化时inspiration可能为空列表
+    - 会处理程序不存在的异常情况
     '''
     def __init__(self,config:Config,metric:Optional[str] = None):
         self.config = config
         self.metric = metric
         self.prompt_sampler = PromptSampler_langchain(config=config.prompt)
-        
+        self.client = None
     def execute(self,state:IslandState):
         #logger.info(f"岛屿{self.island_id}的构建prompt开始")
         return self._build_prompt(state)
@@ -1050,10 +1200,18 @@ class node_build_prompt(SyncNode):
         logger.info(f"Island:{state.id} START node_build_prompt")
         prompt = self.execute(state)
         logger.info(f"Island:{state.id} END node_build_prompt")
-        return {
+        if self.client is None:
+            self.client = SimpleClient(self.config.port)
+        update_dict = {
             "prompt": prompt,
             "status": IslandStatus.BUILD_PROMPT
         }
+        self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+        return update_dict
     def _build_prompt(self,state:IslandState)->str:
 
         # 若当前program为空 则使用父代程序
@@ -1117,24 +1275,56 @@ class node_build_prompt(SyncNode):
 
 class node_llm_generate(SyncNode):
     '''
+    LLM程序生成节点
     
-    根据上一个节点build的prompt 使用LLM生成子代程序 
-    如果LLM生成失败 或者 子代程序无差异 
-    那么这个节点的status不会更新 在下一个检查节点时如果检查到status不是"IslandStatus.LLM_GENERATE"
-    证明这个过程中没有生成合适的子代程序
-    则会重新跳回到sample节点 重新采样父代程序 重新build prompt 重新生成子代程序
-    并且代数+1 
-
-    此节点会更新的key:
-    llm_message_diff,
-    llm_message_rewrite,
-    llm_message_suggestion,
-    status,
-    llm_generate_success ,
-    current_program_code,
-    current_program_id,
-    llm_change_summary,
+    功能描述：
+    - 使用LLM根据构建的提示词生成子代程序
+    - 支持两种进化模式：基于差异(diff)和基于重写(rewrite)
+    - 处理LLM生成失败、无差异等异常情况
+    - 创建包含新代码的Program对象
+    - 记录变更摘要和生成建议
     
+    生成模式：
+    1. 基于差异模式：
+       - 生成代码差异(diff_code)和建议(suggestion)
+       - 使用apply_diff将差异应用到父代程序
+       - 验证差异块的有效性
+    
+    2. 基于重写模式：
+       - 生成完整的重写代码(rewrite_code)
+       - 解析并验证新代码的完整性
+       - 标记变更摘要为"full rewrite"
+    
+    错误处理：
+    - LLM响应为None时触发重新采样
+    - 差异块为空时触发重新采样
+    - 重写代码无效时触发重新采样
+    - 失败时增加迭代计数和会议进度
+    
+    更新的状态字段（成功时）：
+    - diff_message/rewrite_message: LLM生成的代码内容
+    - suggestion_message: LLM提供的改进建议
+    - status: 节点状态更新为LLM_GENERATE
+    - llm_generate_success: 生成成功标志（True）
+    - latest_program: 包含新代码的Program对象
+    - change_summary: 变更摘要
+    
+    更新的状态字段（失败时）：
+    - status: 保持LLM_GENERATE状态
+    - llm_generate_success: 生成失败标志（False）
+    - iteration: 迭代次数+1
+    - now_meeting: 会议进度+1
+    - next_meeting: 下次会议时间-1
+    
+    输入要求：
+    - IslandState: 包含prompt的岛屿状态
+    
+    输出结果：
+    - Dict: 包含生成结果和状态的字典
+    
+    失败重试机制：
+    - 生成失败时会触发重新采样父代程序
+    - 重新构建提示词并再次尝试生成
     '''
     def __init__(self,config:Config):
         self.config = config
@@ -1149,6 +1339,7 @@ class node_llm_generate(SyncNode):
             self.structure = ResponseFormatter_template_rewrite
             self.key = ["suggestion","rewrite_code"]
             #logger.info(f"岛屿{self.island_id}的LLM生成使用基于重写的演化")
+        self.client =  None
 
     def _llm_generate(self,state:IslandState):
         return self.llm.invoke(state.prompt,self.structure,self.key)
@@ -1159,39 +1350,61 @@ class node_llm_generate(SyncNode):
         #logger.info(f"岛屿{self.island_id}的LLM生成结果: {llm_response}")
         # logger.info(f"岛屿{self.island_id}的LLM生成成功")
         generation = state.iteration
-        
+        if self.client is None:
+            self.client = SimpleClient(self.config.port)
         if llm_response is None:
             # 失败 
             #logger.info(f"岛屿{self.island_id}在llm_generate的过程中的response为None")
-            return {
+            update_dict = {
                 "status": IslandStatus.LLM_GENERATE,
                 "llm_generate_success":False,
-                "iteration":generation+1#重新采样 代数+1
+                "iteration":generation+1,#重新采样 代数+1
+                "now_meeting":state.now_meeting+1,
+                "next_meeting":state.next_meeting-1,
             }
-
+            self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+            return update_dict
         if self.diff_based_evolution:
             #logger.info(f"岛屿{self.island_id}使用基于diff的进化方式")
             parent_program = state.all_programs.get_program(state.sample_program.id)
             if parent_program is None:
                 #logger.error(f"父代程序为空: {state.sample_program.id}")
-                return {
+                update_dict = {
                     # "status": (self.island_id,IslandStatus.LLM_GENERATE),
                     "llm_generate_success":False,
-                    "iteration":generation+1#重新采样 代数+1
+                    "iteration":generation+1,#重新采样 代数+1
+                    "now_meeting":state.now_meeting+1,
+                    "next_meeting":state.next_meeting-1,
                 }
-                
+                self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+                return update_dict
             parent_code = parent_program.code 
             diff_code = llm_response["diff_code"]
             suggestion = llm_response["suggestion"]
             diff_blocks = extract_diffs(diff_code)
             if not diff_blocks or diff_blocks == []:
                 #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有diff_blocks")
-                return {
+                update_dict = {
                     # "status": (self.island_id,IslandStatus.LLM_GENERATE),
                     "llm_generate_success":False,
-                    "iteration":generation+1#重新采样 代数+1
+                    "iteration":generation+1,#重新采样 代数+1
+                    "now_meeting":state.now_meeting+1,
+                    "next_meeting":state.next_meeting-1,
                 }
-            
+                self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+                return update_dict
             child_code = apply_diff(parent_code,diff_code)
             change_summary = format_diff_summary(diff_blocks)
             #生成子代的id
@@ -1203,7 +1416,7 @@ class node_llm_generate(SyncNode):
                                     parent_id=parent_program.id,
                                     )
 
-            return {
+            update_dict = {
                 "diff_message": diff_code,
                 "suggestion_message": suggestion,
                 "status": IslandStatus.LLM_GENERATE,
@@ -1211,28 +1424,44 @@ class node_llm_generate(SyncNode):
                 "latest_program":child_Program,
                 "change_summary":change_summary,
             }
+            self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+            return update_dict
         else :  # 基于重写的演化
             rewrite_code = llm_response["rewrite_code"]
             if rewrite_code is None or rewrite_code == "":
                 #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有rewrite_code")
-                return {
+                update_dict = {
                     "status": IslandStatus.LLM_GENERATE,
                     "llm_generate_success":False,
-                    "iteration":generation+1#重新采样 代数+1
+                    "iteration":generation+1,#重新采样 代数+1
+                    "now_meeting":state.now_meeting+1,
+                    "next_meeting":state.next_meeting-1,
                 }
+                self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+                return update_dict
             new_code = parse_full_rewrite(rewrite_code,state.language)
             if not new_code:
                 #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有new_code")
                 return {
                         "status": IslandStatus.LLM_GENERATE,
                         "llm_generate_success":False,
-                        "iteration":generation+1#重新采样 代数+1
+                        "iteration":generation+1,#重新采样 代数+1
+                        "now_meeting":state.now_meeting+1,
+                        "next_meeting":state.next_meeting-1,
                     }
             change_summary = "full rewrite"
             child_id = str(uuid.uuid4())
             #logger.info(f"成功生成岛屿{self.island_id}的子代id: {child_id}")
             child_program = Program(id=child_id,code=new_code,parent_id=state.sample_program.id)
-            return {
+            update_dict = {
                 "rewrite_message":rewrite_code,
                 "suggestion_message":llm_response["suggestion"],
                 "status": IslandStatus.LLM_GENERATE,
@@ -1240,6 +1469,12 @@ class node_llm_generate(SyncNode):
                 "latest_program":child_program,
                 "change_summary":change_summary,
             }
+            self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
+            return update_dict
     def __call__(self,state:IslandState):
         logger.info(f"Island:{state.id} START node_llm_generate")
         result = self.execute(state)
@@ -1251,31 +1486,74 @@ class node_llm_generate(SyncNode):
     
 class node_update(SyncNode):
     '''
-    更新state中的内容 这个节点负责将新的program添加进程序库
-    但是这个程序库是子图中临时的 是主图中的引用 
-     
-    新的program的id code program对象 已经更新了
-    在进入这个节点之前如果state.lock 那么要等待其他的update完成后才可以进入此节点
-
-    1. 更新best_program 
-    2. 更新best_program_id
-    3. 更新best_metrics 
-    4. 更新best_program_each_island中[self.island_id]的id
-    5. 更新archive *
-    6. 更新island_programs
-    7. 更新all_programs *
-    8. 更新newest_programs 
-    9. 更新island_generation_count 
-    10. 更新feature_map *
-    11. 更新status
-    12. 更新lock为False 
+    程序库更新节点
+    
+    功能描述：
+    - 将评估完成的新程序添加到各种程序库中
+    - 更新全局最佳程序和岛屿最佳程序
+    - 维护精英程序归档（固定大小）
+    - 更新MAP-Elites特征网格映射
+    - 管理岛屿程序库容量（到达上限时替换最差程序）
+    - 更新迭代计数和会议进度
+    
+    更新策略：
+    1. 最佳程序更新：
+       - 比较当前程序与全局最佳程序
+       - 比较当前程序与岛屿最佳程序
+       - 使用_is_better函数进行性能比较
+    
+    2. 程序库管理：
+       - 岛屿程序库未满时直接添加
+       - 已满时与最差程序比较，优者替换劣者
+       - 同步更新全局程序库
+    
+    3. 精英归档维护：
+       - 归档未满时直接添加
+       - 已满时与最差归档程序比较并替换
+    
+    4. 特征网格更新：
+       - 计算程序的特征坐标
+       - 更新MAP-Elites网格映射
+       - 支持多样性维护
+    
+    更新的状态字段：
+    - all_best_program: 全局最佳程序（如果有更新）
+    - best_program: 岛屿最佳程序（如果有更新）
+    - programs: 岛屿程序库更新操作（"add"或"replace"）
+    - latest_program: 当前最新程序
+    - archive: 精英归档更新操作（如果有更新）
+    - feature_map: 特征网格更新（如果有更新）
+    - all_programs: 全局程序库更新操作
+    - iteration: 迭代次数+1
+    - now_meeting: 会议进度+1
+    - next_meeting: 下次会议时间-1
+    - status: 节点状态更新为UPDATE
+    
+    输入要求：
+    - IslandState: 包含latest_program的岛屿状态
+    
+    输出结果：
+    - Dict: 包含所有更新操作的字典
+    
+    性能优化：
+    - 只更新需要变更的字段
+    - 使用元组操作标记更新类型
+    - 避免不必要的数据复制
     '''
     def __init__(self,config:Config):
         self.config = config
+        self.client = None
     def __call__(self,state:IslandState):
         logger.info(f"Island:{state.id} START node_update")
         update_dict = self.execute(state)
         logger.info(f"Island:{state.id} END node_update")
+        if self.client is None:
+            self.client = SimpleClient(self.config.port)
+        self.client.send_message({
+                "island_id":state.id,
+                "update_dict":update_dict,
+                
+            })
         return update_dict
     
     def execute(self,state:IslandState):
@@ -1331,7 +1609,8 @@ class node_update(SyncNode):
         current_iteration = state.iteration
         
         update_dict["iteration"] = current_iteration + 1
-        
+        update_dict["now_meeting"] = state.now_meeting + 1
+        update_dict["next_meeting"] = state.next_meeting - 1
         
         update_dict["status"] = IslandStatus.UPDATE
         # for k,v in update_dict.items():

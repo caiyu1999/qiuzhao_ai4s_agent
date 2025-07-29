@@ -5,10 +5,6 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-
-
-
-
 class routing_llm_generate_successful(object):
     '''
     
@@ -43,12 +39,14 @@ class routing_iteration_end(object):
     
     '''
     
-    def __init__(self,config:Config,island_id:str,meeting_interval:int):
+    def __init__(self,config:Config,island_id:str):
         self.config = config
         self.island_id = island_id
-        self.meeting_interval = meeting_interval
+        
     def __call__(self,state:IslandState) -> bool:
-        if state.iteration%self.meeting_interval == 0:
+        
+        if state.next_meeting == 0:
+            
             logger.info(f"Island:{state.id} has reached the time of meeting")
             return True
         else:

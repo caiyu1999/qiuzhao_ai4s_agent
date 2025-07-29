@@ -23,21 +23,17 @@ class Config:
     controller: ControllerConfig = field(default_factory=ControllerConfig)
     # General settings
     
-    resume: bool = True 
+    
     max_iterations: int = 10000
     checkpoint_interval: int = 100
     log_level: str = "INFO"
-    log_dir: str = ""
     diff_based_evolution: bool = True
     allow_full_rewrites: bool = False
     enable_artifacts: bool = False # 是否开启工件 如果不开启 不存储工件信息
     random_seed: Optional[int] = 42
     max_code_length: int = 20000
-    checkpoint_path: str = ""
     init_program_path: str = ""
     evalutor_file_path: str = ""
-    output_dir: str = ""
-    template_dir: str = ""
     # 工件存储
     artifacts_base_path: Optional[str] = None  # Defaults to db_path/artifacts
     artifact_size_threshold: int = 32 * 1024  # 32KB threshold
@@ -45,16 +41,19 @@ class Config:
     artifact_retention_days: int = 30
     
     archive_size: int = 20
-    
-    # General settings
-    programs_save_path: Optional[str] = None  # Path to store programs on disk
-    in_memory: bool = True
-    
-    random_meeting:bool = False # 是否开启随机meeting 如果开启 则每次meeting后 下一次meeting的时间随机 
+    random_meeting:bool = True # 是否开启随机meeting 如果开启 则每次meeting后 下一次meeting的时间随机 
     meeting_interval:int = 2 # 每次meeting的间隔 如果开启随机meeting 则每次meeting后 下一次meeting的时间随机 
     meeting_interval_list: list = field(default_factory=lambda: [2,4,8,16]) # meeting的间隔列表  如果未到达max_iterations 则使用最后的值 
+    graph_image_path: str = ""
+   
+    #graph running configuration 
+    checkpoint: str = ""
+    log_dir: str = ""
+    resume: bool = True 
+    resume_iteration: int = 0
     
-    
+    # port for visualization
+    port: int = 9980 
 
 
     @classmethod
@@ -134,19 +133,15 @@ class Config:
             "diff_based_evolution": self.diff_based_evolution,
             "allow_full_rewrites": self.allow_full_rewrites,
             "max_code_length": self.max_code_length,
-            "checkpoint_path": self.checkpoint_path,
             "init_program_path": self.init_program_path,
             "evalutor_file_path": self.evalutor_file_path,
-            "output_dir": self.output_dir,
-            "template_dir": self.template_dir,
             "artifacts_base_path": self.artifacts_base_path,
             "artifact_size_threshold": self.artifact_size_threshold,
             "cleanup_old_artifacts": self.cleanup_old_artifacts,
             "artifact_retention_days": self.artifact_retention_days,
             "enable_artifacts": self.enable_artifacts,
-            "programs_save_path": self.programs_save_path,
-            "in_memory": self.in_memory,
             "archive_size": self.archive_size,
+            "checkpoint": self.checkpoint,
             # Component configurations
             "llm": {
                 "models": [
@@ -260,3 +255,8 @@ def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
 
     return config
 
+
+
+if __name__ == "__main__":
+    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
+    print(config.to_dict())

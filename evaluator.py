@@ -40,8 +40,24 @@ class EvaluationResult:
     @classmethod
     def from_dict(cls, metrics: Dict[str, float]) -> "EvaluationResult":
         """Auto-wrap dict returns for backward compatibility"""
-        if isinstance(metrics,dict):
-            return cls(metrics=metrics)
+        if isinstance(metrics, dict):
+            # 确保所有metrics值都是float类型
+            cleaned_metrics = {}
+            for key, value in metrics.items():
+                try:
+                    if isinstance(value, (int, float)):
+                        cleaned_metrics[key] = float(value)
+                    elif isinstance(value, str):
+                        # 尝试将字符串转换为float，如果失败则设为0.0
+                        try:
+                            cleaned_metrics[key] = float(value)
+                        except (ValueError, TypeError):
+                            cleaned_metrics[key] = 0.0
+                    else:
+                        cleaned_metrics[key] = 0.0
+                except Exception:
+                    cleaned_metrics[key] = 0.0
+            return cls(metrics=cleaned_metrics)
        
 
     def to_dict(self) -> Dict[str, float]:

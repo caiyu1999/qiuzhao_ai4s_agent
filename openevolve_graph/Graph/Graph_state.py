@@ -16,6 +16,7 @@ from typing_extensions import Annotated
 from openevolve_graph.utils.utils import _is_better
 # 合并函数现在从 langgraph_compatible_container 模块导入
 from openevolve_graph.utils.thread_safe_programs import Programs_container
+import json 
 import logging
 logger = logging.getLogger(__name__)
 
@@ -159,8 +160,16 @@ class IslandState(BaseModel):
     sample_inspirations:List[str] = Field(default_factory=list)
     # 岛屿上最好的程序
     best_program:Program = Field(default_factory=Program)
-    # iteration 迭代次数  
+    
+    # iteration 总迭代次数  
     iteration:int = Field(default=0)
+    
+    #距离上次meeting后的迭代次数
+    now_meeting:int = Field(default=0)
+    #距离下次meeting的迭代次数
+    next_meeting:int = Field(default=0)
+    
+    
     # 岛屿的进化方向 这里暂定空字典 在后面添加 负责指导岛屿的总体进化方向 安全 e.g. {"island_id":"evolution_direction"}
     # island_evolution_direction:str = Field(default="") #这个在后期可以实现
     
@@ -193,6 +202,10 @@ class IslandState(BaseModel):
     @classmethod
     def from_dict(cls,data:Dict[str,Any])->"IslandState":
         return IslandState(**data)
+
+    def to_json(self)->str:
+        # 使用Pydantic v2的model_dump_json方法，它会自动处理枚举序列化
+        return self.model_dump_json(exclude_none=True, indent=2)
 def reducer_IslandState(left:IslandState,right:IslandState)->IslandState:
     '''
     IslandState的更新方式 只需传入IslandState即可
@@ -217,19 +230,32 @@ class GraphState(BaseModel):
     '''       
     # 配置 Pydantic 以允许任意类型
     model_config = {"arbitrary_types_allowed": True}
+    
     iteration:int = Field(default=0)
     # 全局共享状态 
     # 对于const参数 就算是合并节点 也不会更新  
     init_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 初始程序的id 全局只有一个 这个值不会被更新 const
+    
     evaluation_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 评估程序的code 全局只有一个 这个值不会被更新 const
+    
     language:Annotated[str,reducer_for_single_parameter] = Field(default="python") # 编程语言 const
+    
     file_extension:Annotated[str,reducer_for_single_parameter] = Field(default="py") # 文件扩展名 const
+    
     num_islands:Annotated[int,reducer_for_single_parameter] = Field(default=0) # 岛屿的数量  const
+    
     islands_id:Annotated[List[str],reducer_for_single_parameter] = Field(default_factory=list) # 岛屿的id const 岛屿的id是全局唯一的 不会被更新 
     
     best_program: Annotated[Program, reducer_best_program] = Field(default_factory=Program)
+    
     #交流会相关
     generation_count_in_meeting:int = Field(default=0) # 交流会进行的次数
+    
+    
+    
+    
+    
+    
     # 以下内容在每一次meeting后更新 随即下放到每一个岛屿 
     
     # 精英归档 里面存放Program对象 各个岛屿上的精英归档汇总在这个dict中 随时更新
@@ -251,3 +277,11 @@ class GraphState(BaseModel):
     def from_dict(cls,data:Dict[str,Any])->"GraphState":
         return GraphState(**data)
     
+    
+    def to_json(self)->str:
+        # 使用Pydantic v2的model_dump_json方法，它会自动处理枚举序列化
+        return self.model_dump_json(exclude_none=True, indent=2)
+    
+if __name__ == "__main__":
+    state = GraphState()
+    print(state.to_json())

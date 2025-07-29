@@ -5,103 +5,34 @@ log_level: "INFO"
 # LLM configuration
 llm:
   models:
-    # - name: "gpt-3.5-turbo"
-    #   api_key: "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
-    #   base_url: "https://api.chatanywhere.tech/v1"
-    #   temperature: 0.7
-    #   top_p: 0.95
-    #   max_tokens: 8192
-    #   timeout: 600
-    #   weight: 0.8
-    #   retries: 3
-    #   retry_delay: 5
-    #   random_seed: 42
-    #   use_web: false
-    #   tavily_api_key: "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"
-
-    # - name: "claude-3-5-haiku-20241022"
-    #   api_key: "sk-yUo3F5yb9jge79Sc3G75w6iCDM5pzPvQ5WmypY6iuRhHs9sh"
-    #   base_url: "https://api.chatanywhere.tech/v1"
-    #   temperature: 0.7
-    #   top_p: 0.95
-    #   max_tokens: 8192
-    #   timeout: 600
-    #   weight: 2.0
-    #   retries: 3
-    #   retry_delay: 5
-    #   random_seed: 42
-    #   use_web: false
-    #   tavily_api_key: "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"
-
     - name: "gpt-4o-mini"
-      api_key: "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
+      api_key: "sk-yUo3F5yb9jge79Sc3G75w6iCDM5pzPvQ5WmypY6iuRhHs9sh"
       base_url: "https://api.chatanywhere.tech/v1"
       temperature: 0.7
       top_p: 0.95
       max_tokens: 8192
-      timeout: 15
+      timeout: 60
       weight: 0.5
       retries: 2
       retry_delay: 3
       random_seed: 42
       use_web: false
       tavily_api_key: "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"
-    # - name: "deepseek-chat"
-    #   api_key: "sk-9dbd3a7a0ec942dea9108ac58b081d77"
-    #   base_url: "https://api.deepseek.com/v1"
-    #   temperature: 0.7
-    #   top_p: 0.95
-    #   max_tokens: 8192
-    #   timeout: 600
-    #   weight: 0.5
-    #   retries: 3
-    #   retry_delay: 5
-    #   random_seed: 42
-    #   use_web: false
-    #   tavily_api_key: "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"
 
   evaluator_models:
     - name: "gpt-4o-mini"
-      api_key: "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
+      api_key: "sk-yUo3F5yb9jge79Sc3G75w6iCDM5pzPvQ5WmypY6iuRhHs9sh"
       base_url: "https://api.chatanywhere.tech/v1"
       temperature: 0.7
       top_p: 0.95
       max_tokens: 8192
-      timeout: 600
-      weight: 0.8
-      retries: 3
-      retry_delay: 5
+      timeout: 60
+      weight: 0.5
+      retries: 2
+      retry_delay: 3
       random_seed: 42
-      use_web: true
+      use_web: false
       tavily_api_key: "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"
-    # - name: "gpt-4o-mini"
-    #   api_key: "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
-    #   base_url: "https://api.chatanywhere.tech/v1"
-    #   temperature: 0.7
-    #   top_p: 0.95
-    #   max_tokens: 8192
-    #   timeout: 600
-    #   weight: 0.2
-    #   retries: 2
-    #   retry_delay: 5
-    #   random_seed: 42
-    #   use_web: false
-    #   tavily_api_key: "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"
-    # - name: "gpt-4o-mini"
-    #   api_key: "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
-    #   base_url: "https://api.chatanywhere.tech/v1"
-    #   temperature: 0.7
-    #   top_p: 0.95
-    #   max_tokens: 8192
-    #   timeout: 600
-    #   weight: 0.2
-    #   retries: 3
-    #   retry_delay: 5
-    #   random_seed: 42
-    #   use_web: false
-    #   tavily_api_key: "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"
-# Prompt configuration
-
 
 prompt:
   system_message: |
@@ -127,14 +58,15 @@ island:
   num_islands: 4
   elite_selection_ratio: 0.3
   exploitation_ratio: 0.7
+  time_of_meeting: 2
 
 # Evaluator configuration
 evaluator:
-  timeout: 60
+  timeout: 15
   cascade_evaluation: true
   cascade_thresholds: [0.5, 0.75]
   parallel_evaluations: 4
-  use_llm_feedback: true
+  use_llm_feedback: false
 
 # graph settings
 graph:
@@ -145,17 +77,18 @@ controller:
   resume: true 
 
 
-resume: true 
-max_iterations: 10000
-checkpoint_interval: 100
+
+max_iterations: 100
+checkpoint_interval: 20
 log_level: "INFO"
 log_dir: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/logs"
 diff_based_evolution: ture  # Use full rewrites instead of diffs
 allow_full_rewrites: false    # Allow full rewrites for constructor functions
 random_seed: 42 
 max_code_length: 20000
-checkpoint_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/checkpoints"
 init_program_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py"
 evalutor_file_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py"
 output_dir: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/output"
-# template_dir: ""
+meeting_interval: 2
+random_meeting: false
+checkpoint: ""

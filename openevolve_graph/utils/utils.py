@@ -17,6 +17,91 @@ from typing import Dict, List, Optional, Tuple, Union
 # from openevolve_graph.Graph.Graph_state import BaseModel
 from openevolve_graph.Config.config import Config
 
+def pydantic_to_json(model: BaseModel, **kwargs) -> str:
+    """
+    将Pydantic模型转换为JSON字符串的通用工具函数
+    
+    Args:
+        model: Pydantic模型实例
+        **kwargs: 传递给model_dump_json的参数
+        
+    Returns:
+        JSON字符串
+        
+    Examples:
+        # 基本用法
+        json_str = pydantic_to_json(my_model)
+        
+        # 排除None值，美化输出
+        json_str = pydantic_to_json(my_model, exclude_none=True, indent=2)
+        
+        # 排除特定字段
+        json_str = pydantic_to_json(my_model, exclude={'password', 'secret'})
+    """
+    # 过滤掉不适用于model_dump_json的参数
+    valid_kwargs = {}
+    for key, value in kwargs.items():
+        if key in ['exclude_none', 'exclude', 'include', 'by_alias', 'exclude_unset', 'exclude_defaults', 'indent', 'separators', 'default']:
+            valid_kwargs[key] = value
+    
+    default_kwargs = {
+        'exclude_none': True,
+        'indent': 2
+    }
+    default_kwargs.update(valid_kwargs)
+    return model.model_dump_json(**default_kwargs)
+
+def pydantic_to_dict(model: BaseModel, **kwargs) -> Dict[str, Any]:
+    """
+    将Pydantic模型转换为字典的通用工具函数
+    
+    Args:
+        model: Pydantic模型实例
+        **kwargs: 传递给model_dump的参数
+        
+    Returns:
+        字典表示
+        
+    Examples:
+        # 基本用法
+        data_dict = pydantic_to_dict(my_model)
+        
+        # 排除None值
+        data_dict = pydantic_to_dict(my_model, exclude_none=True)
+    """
+    # 过滤掉不适用于model_dump的参数
+    valid_kwargs = {}
+    for key, value in kwargs.items():
+        if key in ['exclude_none', 'exclude', 'include', 'by_alias', 'exclude_unset', 'exclude_defaults']:
+            valid_kwargs[key] = value
+    
+    default_kwargs = {
+        'exclude_none': True
+    }
+    default_kwargs.update(valid_kwargs)
+    return model.model_dump(**default_kwargs)
+
+def save_pydantic_to_file(model: BaseModel, file_path: str, **kwargs) -> None:
+    """
+    将Pydantic模型保存到JSON文件的通用工具函数
+    
+    Args:
+        model: Pydantic模型实例
+        file_path: 文件路径
+        **kwargs: 传递给pydantic_to_json的参数
+        
+    Examples:
+        # 基本用法
+        save_pydantic_to_file(my_model, "data.json")
+        
+        # 美化输出
+        save_pydantic_to_file(my_model, "data.json", indent=4)
+    """
+    json_str = pydantic_to_json(model, **kwargs)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(json_str)
+
 def format_metrics_safe(metrics: Dict[str, Any]) -> str:
     """
     Safely format metrics dictionary for logging, handling both numeric and string values.

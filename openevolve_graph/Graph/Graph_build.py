@@ -28,9 +28,9 @@ if not os.path.exists(logger_dir):
     os.makedirs(logger_dir)
 
 # 获取根记录器 (Root Logger)
-log = logging.getLogger()
-log.handlers.clear()  # 清空已有的handler
-log.setLevel(logging.INFO) # 设置根记录器的级别
+root_logger = logging.getLogger()
+root_logger.handlers.clear()  # 清空已有的handler
+root_logger.setLevel(logging.INFO) # 设置根记录器的级别
 
 # 创建文件处理器，并设置更详细的格式
 file_handler = logging.FileHandler(
@@ -48,8 +48,12 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 
 # 为根记录器添加处理器
-log.addHandler(file_handler)
-log.addHandler(stream_handler)
+root_logger.addHandler(file_handler)
+root_logger.addHandler(stream_handler)
+
+# 确保所有子logger都能正确传播到根logger
+root_logger.propagate = True
+
 # --- 日志配置结束 ---
 
 class GraphBuilder:
