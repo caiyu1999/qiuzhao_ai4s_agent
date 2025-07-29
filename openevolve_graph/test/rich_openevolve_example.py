@@ -106,14 +106,14 @@ class OpenEvolveMonitor:
     
     def create_islands_table(self) -> Table:
         """创建岛屿状态表格"""
-        table = Table(title="🏝️ 岛屿状态监控", box=box.ROUNDED)
+        table = Table(title="🏝️ 岛屿状态监控", box=box.ROUNDED, style="dim")
         
         # 添加列
-        table.add_column("岛屿ID", style="cyan", width=8)
-        table.add_column("状态", style="green", width=10)
-        table.add_column("迭代进度", style="yellow", width=12)
-        table.add_column("最佳程序ID", style="magenta", width=15)
-        table.add_column("精度", style="red", width=10)
+        table.add_column("岛屿ID", style="cyan dim", width=8)
+        table.add_column("状态", style="green dim", width=10)
+        table.add_column("迭代进度", style="yellow dim", width=12)
+        table.add_column("最佳程序ID", style="magenta dim", width=15)
+        table.add_column("精度", style="red dim", width=10)
         table.add_column("最后更新", style="dim", width=12)
         
         # 添加每个岛屿的数据

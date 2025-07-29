@@ -6,7 +6,7 @@ log_level: "INFO"
 llm:
   models:
     - name: "gpt-4o-mini"
-      api_key: "sk-yUo3F5yb9jge79Sc3G75w6iCDM5pzPvQ5WmypY6iuRhHs9sh"
+      api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
       base_url: "https://api.chatanywhere.tech/v1"
       temperature: 0.7
       top_p: 0.95
@@ -21,7 +21,7 @@ llm:
 
   evaluator_models:
     - name: "gpt-4o-mini"
-      api_key: "sk-yUo3F5yb9jge79Sc3G75w6iCDM5pzPvQ5WmypY6iuRhHs9sh"
+      api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
       base_url: "https://api.chatanywhere.tech/v1"
       temperature: 0.7
       top_p: 0.95

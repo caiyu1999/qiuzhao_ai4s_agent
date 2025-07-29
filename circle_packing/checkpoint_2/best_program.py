@@ -24,20 +24,20 @@ def construct_packing():
     # First, place a large circle in the center
     centers[0] = [0.5, 0.5]
 
-    # Place 8 circles around it in a denser ring
+    # Place 8 circles around it in a tighter ring
     for i in range(8):
         angle = 2 * np.pi * i / 8
-        centers[i + 1] = [0.5 + 0.35 * np.cos(angle), 0.5 + 0.35 * np.sin(angle)]  # Increased radius to utilize more space
+        centers[i + 1] = [0.5 + 0.25 * np.cos(angle), 0.5 + 0.25 * np.sin(angle)]
 
-    # Place 16 more circles in an outer ring with optimized spacing
+    # Place 16 more circles in an outer ring, adjusting radius for better packing
     for i in range(16):
         angle = 2 * np.pi * i / 16
-        centers[i + 9] = [0.5 + 0.6 * np.cos(angle), 0.5 + 0.6 * np.sin(angle)]  # Adjusted radius for better packing
+        centers[i + 9] = [0.5 + 0.5 * np.cos(angle), 0.5 + 0.5 * np.sin(angle)]
 
     # Additional positioning adjustment to make sure all circles
     # are inside the square and don't overlap
-    # Clip to ensure everything is inside the unit square
-    centers = np.clip(centers, 0.05, 0.95)  # Maintain a consistent margin
+    # Adjust circle positions to ensure they remain within bounds and reduce clipping
+    centers = np.clip(centers, 0.05, 0.95)
 
     # Compute maximum valid radii for this configuration
     radii = compute_max_radii(centers)
@@ -60,7 +60,7 @@ def compute_max_radii(centers):
         np.array of shape (n) with radius of each circle
     """
     n = centers.shape[0]
-    radii = np.ones(n)
+    radii = np.zeros(n)
 
     # First, limit by distance to square borders
     for i in range(n):
@@ -68,15 +68,18 @@ def compute_max_radii(centers):
         # Distance to borders
         radii[i] = min(x, y, 1 - x, 1 - y)
 
-    # Limit by distance to other circles, ensuring no overlaps occur
+    # Then, limit by distance to other circles
+    # Each pair of circles with centers at distance d can have
+    # sum of radii at most d to avoid overlap
     for i in range(n):
         for j in range(i + 1, n):
             dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
 
             # If current radii would cause overlap
             if radii[i] + radii[j] > dist:
-                # Scale both radii proportionally
-                scale = dist / (radii[i] + radii[j])
+                # Scale both radii proportionally using a different strategy
+                avg_radius = (radii[i] + radii[j]) / 2
+                scale = dist / (2 * avg_radius)
                 radii[i] *= scale
                 radii[j] *= scale
 

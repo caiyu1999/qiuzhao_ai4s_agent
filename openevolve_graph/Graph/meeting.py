@@ -34,8 +34,41 @@ def meeting(config:Config,
         main_graph_state.best_program = best_program
     else:
         raise ValueError("best_program is None")
+    
     logger.info(f"本次meeting选出的best_program id: {getattr(best_program, 'id', None)},metrics: {getattr(best_program, 'metrics', {})}")
 
+ 
+    # 迁移岛屿内程序
+    
+    # 遍历岛屿内部的程序 环形迁移
+        # 更新岛屿状态
+    for island_state in island_states: 
+        # 获取岛屿内部的顶级程序 
+        
+        num_programs = int(max(1,island_state.programs.get_num_programs()*config.island.migration_rate))#顶级程序的数量
+        top_programs = island_state.programs.get_top_programs(num_programs)#顶级程序的list
+        
+        # 将要迁移的岛屿id  环形迁移
+        island_id_to_migrate = str(int(island_state.id)+1) if int(island_state.id)+1 < config.island.num_islands else "0" 
+        
+        # 将要迁移的岛屿
+        island_to_migrate = next((i for i in island_states if i.id == island_id_to_migrate),None)
+        if island_to_migrate is None:
+            raise ValueError(f"将要迁移的岛屿{island_id_to_migrate}不存在")
+        
+        # 将要迁移的岛屿的程序
+        island_to_migrate.programs.add_programs(top_programs)
+        
+        # 添加后检查是否超出容量
+        if island_to_migrate.programs.get_num_programs() > config.island.population_size:
+            #超出需要移除部分比较差的程序
+            
+            num_remove = island_to_migrate.programs.get_num_programs() - config.island.population_size
+            worst_programs = island_to_migrate.programs.get_top_programs(config.island.population_size)[num_remove:-1]#获取所有的顶级程序(已经排序过的倒数)
+            island_to_migrate.programs.remove_programs(worst_programs)
+            best_program_after_migration = sorted(island_to_migrate.programs.get_all_programs_to_list(), key=lambda x: x.metrics["combined_score"], reverse=True)[0]
+            island_to_migrate.best_program = best_program_after_migration
+            
 
     # 更新所有程序
     all_programs = {}
@@ -60,7 +93,7 @@ def meeting(config:Config,
         archive[pid] = all_programs[pid]
 
     main_graph_state.archive = Programs_container.from_dict(archive)
-    logger.info(f"本次meeting选出的archive数量: {len(archive)}，archive_size配置: {config.archive_size if hasattr(config, 'archive_size') else getattr(config.island, 'archive_size', None)}")
+    logger.info(f"本次meeting选出的archive数量: {len(archive)},archive_size配置: {config.archive_size if hasattr(config, 'archive_size') else getattr(config.island, 'archive_size', None)}")
 
     # 更新特征坐标
     feature_map = {}
@@ -83,13 +116,34 @@ def meeting(config:Config,
 
     main_graph_state.generation_count_in_meeting += 1 
     logger.info(f"meeting已进行次数: {main_graph_state.generation_count_in_meeting}")
+    
     for island_state in island_states:
         main_graph_state.islands[island_state.id] = island_state
 
     main_graph_state.iteration = main_graph_state.islands['0'].iteration
     logger.info(f"meeting完成 距离下次meeting还有{meeting_interval}次迭代")
+    
+    # for island_state in island_states:
+    #     assert island_state.now_meeting==0
+        
+
+    
+    
     return main_graph_state , meeting_interval
 
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+    
     
 if __name__ == "__main__":
     a= {} 

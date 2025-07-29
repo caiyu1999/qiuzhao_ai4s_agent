@@ -51,14 +51,71 @@ import re
 import random
 from typing_extensions import TypedDict
 import time
-import logging
 import asyncio
 import os
-logger = logging.getLogger(__name__)
+import logging
 
 
 
+# 详细的日志类
+class DetailedLogger:
+    """详细的日志记录器，用于精准定位问题"""
+    
+    def __init__(self, name: str = "GraphNode"):
+        self.name = name
+        self.logger = logging.getLogger(__name__)
+    def info(self, message: str, **kwargs):
+        """记录信息日志"""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        extra_info = " | ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+        log_msg = f"[INFO] {timestamp} | {self.name} | {message}"
+        if extra_info:
+            log_msg += f" | {extra_info}"
+        # 这里会对接上层的父代logger
+        self.logger.info(log_msg)
+    
+    def error(self, message: str, **kwargs):
+        """记录错误日志"""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        extra_info = " | ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+        log_msg = f"[ERROR] {timestamp} | {self.name} | {message}"
+        if extra_info:
+            log_msg += f" | {extra_info}"
+        # 这里会对接上层的父代logger
+        self.logger.error(log_msg)
+    
+    def warning(self, message: str, **kwargs):
+        """记录警告日志"""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        extra_info = " | ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+        log_msg = f"[WARNING] {timestamp} | {self.name} | {message}"
+        if extra_info:
+            log_msg += f" | {extra_info}"
+        # 这里会对接上层的父代logger
+        self.logger.warning(log_msg)
+    
+    def debug(self, message: str, **kwargs):
+        """记录调试日志"""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        extra_info = " | ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+        log_msg = f"[DEBUG] {timestamp} | {self.name} | {message}"
+        if extra_info:
+            log_msg += f" | {extra_info}"
+        # 这里会对接上层的父代logger
+        self.logger.debug(log_msg)
+    
+    def step(self, step_name: str, **kwargs):
+        """记录步骤日志"""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        extra_info = " | ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+        log_msg = f"[STEP] {timestamp} | {self.name} | {step_name}"
+        if extra_info:
+            log_msg += f" | {extra_info}"
+        # 这里会对接上层的父代logger
+        self.logger.info(log_msg)
 
+# 创建全局日志实例
+logger = DetailedLogger("GraphNode")
 
 class node_init_status(AsyncNode):
     '''
@@ -108,56 +165,91 @@ class node_init_status(AsyncNode):
 
     async def execute_async(self, state: GraphState) -> NodeResult | Dict[str, Any]:
         config = self.config
-        # #logger.info("node_init_status: 开始执行 execute")
+        
+        logger.step("Starting node_init_status execution", node_type="node_init_status")
+        
         # 验证必要的配置参数
+        logger.debug("Validating configuration parameters", 
+                    init_program_path=config.init_program_path,
+                    evaluator_file_path=config.evalutor_file_path,
+                    num_islands=config.island.num_islands)
+        
         if config.init_program_path == "":
-            #logger.error("init_program is not set")
+            logger.error("Configuration validation failed: init_program_path is empty")
             raise ValueError("init_program is not set")
         if config.evalutor_file_path == "":
-            #logger.error("evaluator_file_path is not set")
+            logger.error("Configuration validation failed: evaluator_file_path is empty")
             raise ValueError("evaluator_file_path is not set")
         if config.island.num_islands <= 0:
-            #logger.error("num_islands must be greater than 0")
+            logger.error("Configuration validation failed: num_islands must be greater than 0", 
+                        num_islands=config.island.num_islands)
             raise ValueError("num_islands must be greater than 0")
 
-        # #logger.info("node_init_status: 配置参数验证通过")
+        logger.info("Configuration validation passed successfully")
 
         # 提取文件信息
         file_extension = os.path.splitext(config.init_program_path)[1]
         if not file_extension:
             file_extension = ".py"  # 默认扩展名
-
-        # #logger.info(f"node_init_status: 文件扩展名为 {file_extension}")
+        logger.debug("File extension extracted", file_extension=file_extension)
 
         # 加载和处理初始程序
-        code = load_initial_program(config.init_program_path)
-        # #logger.info("node_init_status: 初始程序已加载")
+        logger.step("Loading initial program", file_path=config.init_program_path)
+        try:
+            code = load_initial_program(config.init_program_path)
+            logger.info("Initial program loaded successfully", 
+                       file_path=config.init_program_path,
+                       code_length=len(code))
+        except Exception as e:
+            logger.error("Failed to load initial program", 
+                        file_path=config.init_program_path,
+                        error=str(e))
+            raise
+        
         language = extract_code_language(code)
-        # #logger.info(f"node_init_status: 检测到语言为 {language}")
+        logger.info("Code language detected", language=language)
 
         # 生成唯一ID
         id = str(uuid.uuid4())
-        # #logger.info(f"node_init_status: 生成唯一ID {id}")
+        logger.debug("Generated unique program ID", program_id=id)
         
         # 对初始程序进行评估 
+        logger.step("Starting initial program evaluation", 
+                   program_id=id,
+                   evaluation_file=self.config.evalutor_file_path)
+        
         init_program_code = code
         init_program_id = id
         evaluation_file = self.config.evalutor_file_path
-        # #logger.info("node_init_status: 开始评估初始程序")
-        eval_result,artifact_update = await self._evaluate_program(init_program_code,init_program_id,evaluation_file,state)
-        # #logger.info(f"node_init_status: 初始程序评估完成，metrics: {eval_result.metrics}")
+        
+        try:
+            eval_result, artifact_update = await self._evaluate_program(
+                init_program_code, init_program_id, evaluation_file, state
+            )
+            logger.info("Initial program evaluation completed successfully",
+                       program_id=init_program_id,
+                       metrics=eval_result.metrics,
+                       has_artifacts=bool(artifact_update))
+        except Exception as e:
+            logger.error("Initial program evaluation failed",
+                        program_id=init_program_id,
+                        error=str(e))
+            raise
+        
         artifact = None 
         artifacts_json = None
         artifact_dir = None
         if self.config.enable_artifacts: #如果开启工件 先生成工件 并存储工件
-            # #logger.info("node_init_status: 启用工件存储，准备存储工件")
+            logger.step("Processing artifacts", artifacts_enabled=True)
             artifact = eval_result.artifacts
             artifact.update(artifact_update) # 更新工件
-            artifacts_json,artifact_dir = store_artifacts(init_program_id,artifact,state,self.config)
-            # #logger.info(f"node_init_status: 工件已存储, artifact_dir: {artifact_dir}")
+            artifacts_json, artifact_dir = store_artifacts(init_program_id, artifact, state, self.config)
+            logger.info("Artifacts stored successfully",
+                       program_id=init_program_id,
+                       artifact_dir=artifact_dir)
         
         # 生成program对象 
-        # #logger.info("node_init_status: 生成初始Program对象")
+        logger.step("Creating initial Program object", program_id=init_program_id)
         init_program = Program(
                 id=init_program_id,
                 code=init_program_code,
@@ -169,28 +261,38 @@ class node_init_status(AsyncNode):
                 artifacts_json=artifacts_json,
                 artifact_dir=artifact_dir,
                 )
+        logger.info("Initial Program object created successfully",
+                   program_id=init_program_id,
+                   language=language,
+                   generation=0)
         
-    
         # 初始化岛屿相关数据结构
+        logger.step("Initializing island data structures", num_islands=config.island.num_islands)
         island_id_list = [f"{i}" for i in range(config.island.num_islands)]
         islandstate_dict = {}
+        
         for island_id in island_id_list:
-            temp_Island_state = IslandState(id = island_id)
-            temp_Island_state.programs.add_program(init_program.id,init_program)
+            logger.debug("Initializing island", island_id=island_id)
+            temp_Island_state = IslandState(id=island_id)
+            temp_Island_state.programs.add_program(init_program.id, init_program)
             temp_Island_state.latest_program = init_program 
             temp_Island_state.status = IslandStatus.INIT_STATE
-            temp_Island_state.all_programs.add_program(init_program.id,init_program)
-            temp_Island_state.archive.add_program(init_program.id,init_program)
+            temp_Island_state.all_programs.add_program(init_program.id, init_program)
+            temp_Island_state.archive.add_program(init_program.id, init_program)
             temp_Island_state.language = language
             temp_Island_state.all_best_program = init_program
             temp_Island_state.next_meeting = self.next_meeting
             temp_Island_state.now_meeting = 0
             islandstate_dict[island_id] = temp_Island_state
+            logger.debug("Island initialized successfully", 
+                        island_id=island_id,
+                        next_meeting=self.next_meeting)
 
+        logger.info("All islands initialized successfully", 
+                   total_islands=len(islandstate_dict))
             
-        # #logger.info("node_init_status: 初始化岛屿相关数据结构")
         island_programs_ = Programs_container()
-        island_programs_.add_program(init_program_id,init_program)
+        island_programs_.add_program(init_program_id, init_program)
         all_programs = island_programs_.copy()
         archive = island_programs_.copy()
         feature_map = {} # 全部程序中的特征坐标 全局更新 e.g{"program_id":[0,1,2,-1]}
@@ -198,6 +300,10 @@ class node_init_status(AsyncNode):
         islands_id = island_id_list # 岛屿的id 全局唯一 不会被更新 安全
         best_program = init_program 
         
+        logger.step("node_init_status execution completed successfully",
+                   program_id=init_program_id,
+                   num_islands=num_islands,
+                   language=language)
         
         return {
             "init_program":id,
@@ -217,28 +323,14 @@ class node_init_status(AsyncNode):
             }
         
     def __call__(self,state:GraphState):
-        # #logger.info("node_init_status: __call__ invoked")
-        # logger.info("node_init_status: 开始执行 execute")
-        result = self.execute(state)
-        
-        # 发送消息到可视化服务器
-        # try:
-        #     import json
-        #     client = SimpleClient(port=self.port)
-        #     message = {
-        #         "node_name": "init_status",
-        #         "status": "completed",
-        #         "data": {
-        #             "num_islands": result.get("num_islands", 0) if isinstance(result, dict) else 0,
-        #             "language": result.get("language", "unknown") if isinstance(result, dict) else "unknown"
-        #         }
-        #     }
-        #     client.send_message(json.dumps(message))
-        # except Exception as e:
-        #     logger.warning(f"发送可视化消息失败: {e}")
-        
-        # logger.info(f"node_init_status: 执行结束")
-        return result
+        logger.step("node_init_status __call__ method invoked")
+        try:
+            result = self.execute(state)
+            logger.info("node_init_status __call__ method completed successfully")
+            return result
+        except Exception as e:
+            logger.error("node_init_status __call__ method failed", error=str(e))
+            raise
     
     async def _llm_evaluate(self, program_code: str) -> Dict[str, Any]:
         """
@@ -251,27 +343,29 @@ class node_init_status(AsyncNode):
         Returns:
             Dictionary of metric name to score
         """
-        # #logger.info("node_init_status: 开始 LLM 评估")
+        logger.step("Starting LLM evaluation", code_length=len(program_code))
+        
         if not self.llm_evaluator:
-            # #logger.warning("node_init_status: 未配置 LLM 评估器")
+            logger.warning("LLM evaluator not configured, skipping LLM evaluation")
             return {}
 
         try:
             # Create prompt for LLMThreadSafePrograms
+            logger.debug("Building LLM evaluation prompt")
             prompt = self.prompt_sampler.build_prompt(
                 current_program=program_code, template_key="evaluation"
             )
-
-            # #logger.info(f"node_init_status: LLM prompt 构建完成: {prompt}")
+            logger.debug("LLM evaluation prompt built successfully", prompt_length=len(prompt))
 
             # Get LLM response
+            logger.step("Invoking LLM for evaluation")
             responses = await self.llm_evaluator.invoke_parallel(
                 prompt=prompt,
                 structure=self.structure,
                 key=self.key,
             )
-            # #logger.info(f"node_init_status: LLM 响应: {responses}") 
-            # LLM 响应: {'readability': [0.85], 'maintainability': [0.9], 'efficiency': [0.8], 'other_information': ['The code is well-structured, clear, and modular, making it maintainable and easy to modify. However, the nested loop in `compute_max_radii` could be optimized further, especially for larger n.']}
+            logger.info("LLM evaluation response received", 
+                       response_keys=list(responses.keys()) if responses else [])
 
             try: # 当前版本返回的一般是一个dict {key:[value1,value2,value3]}
 
@@ -280,25 +374,28 @@ class node_init_status(AsyncNode):
                 for key, value_list in responses.items():
                     if key == "other_information": # 其他信息 直接赋给artifacts
                         continue
-                    # #logger.debug(f"node_init_status: LLM 响应 key: {key}")
                     length_ = len(value_list) #获取value_list的长度
                     metrics[key] = sum(value_list) / length_
                     
                 artifacts['other_information'] = responses['other_information']
 
-                # #logger.info(f"node_init_status: LLM 评估结果 metrics: {metrics}, artifacts: {artifacts}")
+                logger.info("LLM evaluation metrics calculated successfully",
+                           metrics=metrics,
+                           artifacts_count=len(artifacts))
+
                 return EvaluationResult(
                     metrics=metrics,
                     artifacts=artifacts,
                 ).to_dict()
 
             except Exception as e:
-                # #logger.warning(f"Error parsing LLM response: {str(e)}")
+                logger.error("Failed to parse LLM evaluation response", 
+                           error=str(e),
+                           response_type=type(responses))
                 return {}
 
         except Exception as e:
-            logger.error(f"Error in node_init_status LLM evaluation: {str(e)}")
-            #traceback.logger.info_exc()
+            logger.error("LLM evaluation failed", error=str(e))
             return {}
     def _process_evaluation_result(self, result: Any) -> EvaluationResult:
         """
@@ -310,18 +407,20 @@ class node_init_status(AsyncNode):
         Returns:
             EvaluationResult instance
         """
-        # #logger.info("node_init_status: 处理评估结果 _process_evaluation_result")
+        logger.debug("Processing evaluation result", result_type=type(result))
+        
         if isinstance(result, dict):
             # Backward compatibility - wrap dict in EvaluationResult
-            # #logger.debug("node_init_status: 评估结果为 dict，转换为 EvaluationResult")
+            logger.debug("Converting dict result to EvaluationResult")
             return EvaluationResult.from_dict(result)
         elif isinstance(result, EvaluationResult):
             # New format - use directly
-            # #logger.debug("node_init_status: 评估结果为 EvaluationResult 实例")
+            logger.debug("Using EvaluationResult directly")
             return result
         else:
             # Error case - return error metrics
-            # #logger.warning(f"Unexpected evaluation result type: {type(result)}")
+            logger.warning("Unexpected evaluation result type, returning error metrics",
+                         result_type=type(result))
             return EvaluationResult(metrics={"error": 0.0})
 
     async def _evaluate_program(
@@ -341,12 +440,17 @@ class node_init_status(AsyncNode):
         Returns:
             Dictionary of metric name to score
         """
-        # #logger.info(f"node_init_status: 开始评估程序 program_id={program_id}")
         start_time = time.time()
         program_id_str = f" {program_id}" if program_id else ""
 
+        logger.step("Starting program evaluation", 
+                   program_id=program_id,
+                   evaluation_file=evaluation_file,
+                   code_length=len(program_code))
+
         # Check if artifacts are enabled 是否开启工件通道
         artifacts_enabled = self.config.enable_artifacts
+        logger.debug("Artifacts configuration", artifacts_enabled=artifacts_enabled)
 
         # Retry logic for evaluation
         last_exception = None
@@ -354,28 +458,36 @@ class node_init_status(AsyncNode):
         with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as temp_file:
             temp_file.write(program_code.encode("utf-8"))
             temp_file_path = temp_file.name
-        # #logger.info(f"node_init_status: 临时文件创建于 {temp_file_path}")
+            logger.debug("Temporary file created", temp_file_path=temp_file_path)
             
         eval_result = EvaluationResult()
         artifact_update = {}
         
         try:
-            # #logger.info("node_init_status: 开始执行评估函数")
             # Run evaluation
+            logger.step("Executing evaluation", 
+                       evaluation_type="cascade" if self.config.evaluator.cascade_evaluation else "direct")
+            
             if self.config.evaluator.cascade_evaluation:# 分级评估 会返回一个metrics和artifacts的EvaluationResult 工件在这里产生
-                # #logger.info("node_init_status: 使用 cascade_evaluate")
                 result = await cascade_evaluate(temp_file_path,evaluation_file,self.config)
             else:
-                # #logger.info("node_init_status: 使用 direct_evaluate")
                 result = await direct_evaluate(temp_file_path,evaluation_file,self.config)
+
+            logger.info("Evaluation execution completed", 
+                       program_id=program_id,
+                       result_type=type(result))
 
             # Process the result based on type 
             eval_result = self._process_evaluation_result(result)
-            # #logger.info(f"node_init_status: 评估函数返回结果: {eval_result.metrics}")
+            logger.info("Evaluation result processed", 
+                       program_id=program_id,
+                       metrics_count=len(eval_result.metrics))
 
             # Check if this was a timeout and capture artifacts if enabled 
             if artifacts_enabled and program_id and eval_result.metrics.get("timeout") is True:
-                # #logger.warning("node_init_status: 检测到评估超时，准备更新工件")
+                logger.warning("Evaluation timeout detected", 
+                             program_id=program_id,
+                             timeout_duration=self.config.evaluator.timeout)
                 if state.all_programs.get_program(program_id).artifacts_json is not None:
                     artifact_update = {}
 
@@ -389,13 +501,16 @@ class node_init_status(AsyncNode):
             # Add LLM feedback if configured
             llm_eval_result = None
             if self.config.evaluator.use_llm_feedback and self.llm_evaluator:
-                # #logger.info("node_init_status: 启用 LLM 反馈评估")
+                logger.step("Adding LLM feedback to evaluation", program_id=program_id)
                 llm_result = await self._llm_evaluate(program_code) # 返回一个dict  {'readability': 0.85, 'maintainability': 0.8, 'efficiency': 0.7, 'other_information': ''}
-                # #logger.info(f"node_init_status: LLM 反馈评估结果: {llm_result}")
                 llm_eval_result = self._process_evaluation_result(llm_result)
 
                 for name, value in llm_result.items():
                     eval_result.metrics[f"llm_{name}"] = value
+                
+                logger.info("LLM feedback added to evaluation", 
+                           program_id=program_id,
+                           llm_metrics_count=len([k for k in eval_result.metrics.keys() if k.startswith('llm_')]))
 
             # Store artifacts if enabled and present
             if (
@@ -406,37 +521,37 @@ class node_init_status(AsyncNode):
                 )
                 and program_id
             ):
-                # #logger.info("node_init_status: 工件存储条件满足，准备合并工件")
+                logger.step("Processing evaluation artifacts", program_id=program_id)
                 if state.all_programs.get_program(program_id).artifacts_json is not None:
                     artifact_update = {}
 
                 # Merge eval_result artifacts with llm artifacts if they exist
                 if eval_result.has_artifacts():
                     artifact_update=eval_result.artifacts
-                    # #logger.debug(
-                    #     f"Program{program_id_str} returned artifacts: "
-                    #     f"{eval_result.artifacts}"
-                    # )
+                    logger.debug("Evaluation artifacts merged", 
+                               program_id=program_id,
+                               artifacts_count=len(eval_result.artifacts))
 
                 if llm_eval_result and llm_eval_result.has_artifacts():
                     artifact_update=llm_eval_result.artifacts
-                    # #logger.debug(
-                    #     f"Program{program_id_str} returned LLM artifacts: "
-                    #     f"{llm_eval_result.artifacts}"
-                    # )
+                    logger.debug("LLM artifacts merged", 
+                               program_id=program_id,
+                               artifacts_count=len(llm_eval_result.artifacts))
 
             elapsed = time.time() - start_time
-            # #logger.info(
-            #     f"Evaluated program{program_id_str} in {elapsed:.2f}s: "
-            #     f"{format_metrics_safe(eval_result.metrics)}"
-            # )
-            # #logger.info(f"node_init_status: artifact_update: {artifact_update}")
+            logger.info("Program evaluation completed successfully", 
+                       program_id=program_id,
+                       elapsed_time=f"{elapsed:.2f}s",
+                       final_metrics_count=len(eval_result.metrics))
+            
             # Return just metrics for backward compatibility
             return eval_result , artifact_update
 
         except asyncio.TimeoutError: #如果是超时错误 
             # Handle timeout specially - don't retry, just return timeout result
-            # #logger.warning(f"Evaluation timed out after {self.config.evaluator.timeout}s")
+            logger.error("Evaluation timeout occurred", 
+                        program_id=program_id,
+                        timeout_duration=self.config.evaluator.timeout)
 
             # Capture timeout artifacts if enabled
             if artifacts_enabled and program_id:
@@ -448,15 +563,14 @@ class node_init_status(AsyncNode):
                 }
                 eval_result.metrics.update({"error": 0.0,"timeout": True})
 
-            # #logger.warning("node_init_status: 评估超时，返回超时结果")
             return eval_result , artifact_update
 
         except Exception as e:
             last_exception = e
-            # #logger.warning(
-            #     f"Evaluation attempt failed for program{program_id_str}: {str(e)}"
-            # )
-            
+            logger.error("Evaluation failed with exception", 
+                        program_id=program_id,
+                        error=str(e),
+                        error_type=type(e).__name__)
 
             # Capture failure artifacts if enabled
             if artifacts_enabled and program_id:
@@ -465,18 +579,17 @@ class node_init_status(AsyncNode):
                     "traceback": traceback.format_exc(),
                     "failure_stage": "evaluation",
                 }
-            # #logger.error("node_init_status: 评估发生异常，返回异常结果")
 
         finally:
             # Clean up temporary file
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
-                # #logger.info(f"node_init_status: 临时文件 {temp_file_path} 已删除")
+                logger.debug("Temporary file cleaned up", temp_file_path=temp_file_path)
 
         # All retries failed
-        # #logger.error(
-        #     f"All evaluation attempts failed for program{program_id_str}. Last error: {str(last_exception)}"
-        # )
+        logger.error("All evaluation attempts failed", 
+                    program_id=program_id,
+                    last_error=str(last_exception) if last_exception else "Unknown")
         eval_result.metrics.update({"error": 0.0})
         return eval_result , artifact_update
     
@@ -523,34 +636,54 @@ class node_evaluate(AsyncNode):
             self.key = None
 
     async def execute_async(self,state:IslandState):
-
+        logger.step("Starting node_evaluate execution", island_id=state.id)
+        
         #岛屿的并行评估
         try:
             current_program = state.latest_program.code
             current_program_id = state.latest_program.id
             evaluation_file = self.config.evalutor_file_path
-            # #logger.info(f"开始评估岛屿{self.island_id}的程序: {current_program_id}")
-            # #logger.info(f"程序的code为: {current_program}")
-            # #logger.info(f"程序的id为: {current_program_id}")
-            # #logger.info(f"程序的evaluation_file为: {evaluation_file}")
+            
+            logger.debug("Program evaluation parameters prepared", 
+                        island_id=state.id,
+                        program_id=current_program_id,
+                        evaluation_file=evaluation_file,
+                        code_length=len(current_program))
 
             eval_result,artifact_update = await self._evaluate_program(current_program,current_program_id,evaluation_file,state)
-            # #logger.info(f"node_evaluate: 评估结果: {eval_result.to_dict()}")
-            # #logger.info(f"node_evaluate: 工件更新: {artifact_update}")
+            logger.info("Program evaluation completed", 
+                       island_id=state.id,
+                       program_id=current_program_id,
+                       metrics=eval_result.metrics)
             
             changes_summary = state.change_summary
             parent_id = state.sample_program.id
             parent_metrics = state.all_programs.get_program(parent_id).metrics
             
+            logger.debug("Parent program information retrieved", 
+                        island_id=state.id,
+                        parent_id=parent_id,
+                        changes_summary=changes_summary)
+            
             artifact = None 
             artifacts_json = None
             artifact_dir = None
             if self.config.enable_artifacts: #如果开启工件 先生成工件 并存储工件
+                logger.step("Processing artifacts", 
+                           island_id=state.id,
+                           program_id=current_program_id,
+                           artifacts_enabled=True)
                 artifact = eval_result.artifacts
                 artifact.update(artifact_update) # 更新工件
                 artifacts_json,artifact_dir = store_artifacts(current_program_id,artifact,state,self.config)
-            #logger.info(f"node_evaluate: 工件存储: {artifacts_json}")
-            #logger.info(f"node_evaluate: 工件存储: {artifact_dir}")
+                logger.info("Artifacts stored successfully", 
+                           island_id=state.id,
+                           program_id=current_program_id,
+                           artifact_dir=artifact_dir)
+            
+            logger.step("Creating evaluated Program object", 
+                       island_id=state.id,
+                       program_id=current_program_id)
             
             current_program = Program(
                     id=current_program_id,
@@ -569,50 +702,68 @@ class node_evaluate(AsyncNode):
                     artifact_dir=artifact_dir,
                     )
             
+            logger.info("Evaluated Program object created successfully", 
+                       island_id=state.id,
+                       program_id=current_program_id,
+                       generation=state.iteration)
+            
             return current_program
         except Exception as e:
-            logger.error(f"node_evaluate: 评估发生异常: {e}")
+            logger.error("Program evaluation failed with exception", 
+                        island_id=state.id,
+                        error=str(e),
+                        error_type=type(e).__name__)
             return None
     def __call__(self,state:IslandState):
         '''
         这个节点计算初始prgram的信息 并更新current_program
         '''
-        logger.info(f"Island:{state.id} START node_evaluate")
-        current_program = asyncio.run(self.execute_async(state))
-        # logger.info(f"current_program:{current_program}")
-        logger.info(f"Island:{state.id} END node_evaluate")
-        if self.client is None:
-            self.client = SimpleClient(self.config.port)
-        update_dict = {}
-        if current_program is None:
-            logger.error(f"Island:{state.id} node_evaluate: 评估发生异常")
-            #目前暂时进行下一轮
+        logger.step("node_evaluate __call__ method invoked", island_id=state.id)
+        try:
+            current_program = asyncio.run(self.execute_async(state))
+            logger.info("node_evaluate __call__ method completed successfully", 
+                       island_id=state.id,
+                       program_created=current_program is not None)
+            
+            if self.client is None:
+                self.client = SimpleClient(self.config.port)
+            
+            update_dict = {}
+            if current_program is None:
+                logger.error("Program evaluation failed, updating state for retry", 
+                           island_id=state.id)
+                #目前暂时进行下一轮
+                update_dict = {
+                    "status":IslandStatus.SAMPLE,
+                    "evaluate_success":False,
+                    "now_meeting":state.now_meeting+1,
+                    "next_meeting":state.next_meeting-1,
+                    "iteration":state.iteration+1,
+                }
+                self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                })
+                return update_dict
+            
             update_dict = {
-                "status":IslandStatus.EVALUATE_CHILD,
-                "evaluate_success":False,
-                "now_meeting":state.now_meeting+1,
-                "next_meeting":state.next_meeting-1,
-                "iteration":state.iteration+1,
+                "status":IslandStatus.UPDATE,
+                "latest_program":current_program,
+                "evaluate_success":True,
             }
+            
             self.client.send_message({
-                "island_id":state.id,
-                "update_dict":update_dict,
-            })
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+            
             return update_dict
-        update_dict = {
-            "status":IslandStatus.EVALUATE_CHILD,
-            "latest_program":current_program,
-            "evaluate_success":True,
-        }
-        
-        
-        self.client.send_message({
-                "island_id":state.id,
-                "update_dict":update_dict,
-                
-            })
-        
-        return update_dict
+        except Exception as e:
+            logger.error("node_evaluate __call__ method failed", 
+                        island_id=state.id,
+                        error=str(e))
+            raise
         
         
     async def _llm_evaluate(self, program_code: str) -> Dict[str, Any]:
@@ -626,24 +777,29 @@ class node_evaluate(AsyncNode):
         Returns:
             Dictionary of metric name to score
         """
+        logger.step("Starting LLM evaluation", code_length=len(program_code))
+        
         if not self.llm_evalutor:
+            logger.warning("LLM evaluator not configured, skipping LLM evaluation")
             return {}
 
         try:
             # Create prompt for LLMThreadSafePrograms
+            logger.debug("Building LLM evaluation prompt")
             prompt = self.prompt_sampler.build_prompt(
                 current_program=program_code, template_key="evaluation"
             )
-
+            logger.debug("LLM evaluation prompt built successfully", prompt_length=len(prompt))
 
             # Get LLM response
+            logger.step("Invoking LLM for evaluation")
             responses = await self.llm_evalutor.invoke_parallel(
                 prompt=prompt,
                 structure=self.structure,
                 key=self.key,
             )
-            #logger.info(f"responses:{responses}")
-            #logger.info(f"parallel generate success ")
+            logger.info("LLM evaluation response received", 
+                       response_keys=list(responses.keys()) if responses else [])
 
             try: # 当前版本返回的一般是一个dict {key:[value1,value2,value3]}
 
@@ -654,24 +810,28 @@ class node_evaluate(AsyncNode):
                 for key, value_list in responses.items():
                     if key =="other_information": # 其他信息 直接赋给artifacts
                         continue
-                    #logger.info(f"key:{key}")
                     length_ = len(value_list) #获取value_list的长度
                     metrics[key] = sum(value_list) / length_
-                ##import pdb;pdb.set_trace()
+                
                 artifacts['other_information'] = responses['other_information']
-                #logger.info(f"artifacts in node_evaluate:{artifacts}")
+                logger.info("LLM evaluation metrics calculated successfully",
+                           metrics=metrics,
+                           artifacts_count=len(artifacts))
+                
                 return EvaluationResult(
                     metrics=metrics,
                     artifacts=artifacts,
                 ).to_dict()
 
             except Exception as e:
-                #logger.warning(f"Error parsing LLM response: {str(e)}")
+                logger.error("Failed to parse LLM evaluation response", 
+                           error=str(e),
+                           response_type=type(responses))
                 return {}
 
         except Exception as e:
-            #logger.error(f"Error in LLM evaluation: {str(e)}")
-            traceback.logger.info_exc()
+            logger.error("LLM evaluation failed", error=str(e))
+            traceback.print_exc()
             return {}
     def _process_evaluation_result(self, result: Any) -> EvaluationResult:
         """
@@ -683,15 +843,20 @@ class node_evaluate(AsyncNode):
         Returns:
             EvaluationResult instance
         """
+        logger.debug("Processing evaluation result", result_type=type(result))
+        
         if isinstance(result, dict):
             # Backward compatibility - wrap dict in EvaluationResult
+            logger.debug("Converting dict result to EvaluationResult")
             return EvaluationResult.from_dict(result)
         elif isinstance(result, EvaluationResult):
             # New format - use directly
+            logger.debug("Using EvaluationResult directly")
             return result
         else:
             # Error case - return error metrics
-            #logger.warning(f"Unexpected evaluation result type: {type(result)}")
+            logger.warning("Unexpected evaluation result type, returning error metrics",
+                         result_type=type(result))
             return EvaluationResult(metrics={"error": 0.0})
 
     async def _evaluate_program(
@@ -701,47 +866,64 @@ class node_evaluate(AsyncNode):
         evaluation_file,
         state:IslandState,
     ) -> Tuple[EvaluationResult, Dict[str, Any]]:
+        """
+        Evaluate a program and return scores
 
+        Args:
+            program_code: Code to evaluate
+            program_id: Optional ID for logging
+
+        Returns:
+            Dictionary of metric name to score
+        """
         start_time = time.time()
         program_id_str = f" {program_id}" if program_id else ""
 
+        logger.step("Starting program evaluation", 
+                   program_id=program_id,
+                   evaluation_file=evaluation_file,
+                   code_length=len(program_code))
+
         # Check if artifacts are enabled 是否开启工件通道
         artifacts_enabled = self.config.enable_artifacts
+        logger.debug("Artifacts configuration", artifacts_enabled=artifacts_enabled)
 
         # Retry logic for evaluation
         last_exception = None
 
-        # for attempt in range(self.config.evaluator.max_retries + 1):
-        #     # Create a temporary file for the program
-        
         with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as temp_file:
             temp_file.write(program_code.encode("utf-8"))
             temp_file_path = temp_file.name
-            #logger.info(f"评估中,temp_file_path为: {temp_file_path}")
+            logger.debug("Temporary file created", temp_file_path=temp_file_path)
             
         eval_result = EvaluationResult()
         artifact_update = {}
         
         try:
-            
             # Run evaluation
+            logger.step("Executing evaluation", 
+                       evaluation_type="cascade" if self.config.evaluator.cascade_evaluation else "direct")
+            
             if self.config.evaluator.cascade_evaluation:# 分级评估 会返回一个metrics和artifacts的EvaluationResult 工件在这里产生
-                # Run cascade evaluation
                 result = await cascade_evaluate(temp_file_path,evaluation_file,self.config)
             else:
-                # Run direct evaluation
                 result = await direct_evaluate(temp_file_path,evaluation_file,self.config)
 
+            logger.info("Evaluation execution completed", 
+                       program_id=program_id,
+                       result_type=type(result))
 
-            # 如果报错 result中会包含报错的信息
-            
             # Process the result based on type 
             eval_result = self._process_evaluation_result(result)
-            #logger.info(f"评估结果: {eval_result.to_dict()}")
+            logger.info("Evaluation result processed", 
+                       program_id=program_id,
+                       metrics_count=len(eval_result.metrics))
+
             # Check if this was a timeout and capture artifacts if enabled 
-            # 包含工件 但是超时
             if artifacts_enabled and program_id and eval_result.metrics.get("timeout") is True:
-                #logger.info(f"评估超时,包含artifacts 但是timeout为True")
+                logger.warning("Evaluation timeout detected", 
+                             program_id=program_id,
+                             timeout_duration=self.config.evaluator.timeout)
                 if state.all_programs.get_program(program_id).artifacts_json is not None:
                     artifact_update = {}
 
@@ -751,21 +933,20 @@ class node_evaluate(AsyncNode):
                         "failure_stage": "evaluation",
                         "error_type": "timeout",
                     }
+
             # Add LLM feedback if configured
             llm_eval_result = None
             if self.config.evaluator.use_llm_feedback and self.llm_evalutor:
-                #logger.info(f"开始LLM评估")
-                # llm_result = asyncio.run(self._llm_evaluate(program_code)) # 返回一个dict 
-                llm_result = await self._llm_evaluate(program_code)
-                # 若llm_result为{} 则证明llm评估失败
-                #logger.info(f"LLM评估结果:{llm_result}")
+                logger.step("Adding LLM feedback to evaluation", program_id=program_id)
+                llm_result = await self._llm_evaluate(program_code) # 返回一个dict  {'readability': 0.85, 'maintainability': 0.8, 'efficiency': 0.7, 'other_information': ''}
                 llm_eval_result = self._process_evaluation_result(llm_result)
-                #logger.info(f"LLM评估结果(after process): {llm_eval_result.to_dict()}")
+
                 for name, value in llm_result.items():
                     eval_result.metrics[f"llm_{name}"] = value
-                ##import pdb;pdb.set_trace()
-
-
+                
+                logger.info("LLM feedback added to evaluation", 
+                           program_id=program_id,
+                           llm_metrics_count=len([k for k in eval_result.metrics.keys() if k.startswith('llm_')]))
 
             # Store artifacts if enabled and present
             if (
@@ -776,36 +957,37 @@ class node_evaluate(AsyncNode):
                 )
                 and program_id
             ):
+                logger.step("Processing evaluation artifacts", program_id=program_id)
                 if state.all_programs.get_program(program_id).artifacts_json is not None:
                     artifact_update = {}
 
                 # Merge eval_result artifacts with llm artifacts if they exist
                 if eval_result.has_artifacts():
                     artifact_update=eval_result.artifacts
-                    #logger.debug(
-                        # f"Program{program_id_str} returned artifacts: "
-                        # f"{eval_result.artifacts}"
-                    # )
+                    logger.debug("Evaluation artifacts merged", 
+                               program_id=program_id,
+                               artifacts_count=len(eval_result.artifacts))
 
                 if llm_eval_result and llm_eval_result.has_artifacts():
                     artifact_update=llm_eval_result.artifacts
-                    #logger.debug(
-                        # f"Program{program_id_str} returned LLM artifacts: "
-                        # f"{llm_eval_result.artifacts}"
-                    # )
+                    logger.debug("LLM artifacts merged", 
+                               program_id=program_id,
+                               artifacts_count=len(llm_eval_result.artifacts))
 
             elapsed = time.time() - start_time
-            #logger.info(
-                # f"Evaluated program{program_id_str} in {elapsed:.2f}s: "
-                # f"{format_metrics_safe(eval_result.metrics)}"
-            # )
-            #logger.info(f"artifact_update:{artifact_update}")
+            logger.info("Program evaluation completed successfully", 
+                       program_id=program_id,
+                       elapsed_time=f"{elapsed:.2f}s",
+                       final_metrics_count=len(eval_result.metrics))
+            
             # Return just metrics for backward compatibility
             return eval_result , artifact_update
 
         except asyncio.TimeoutError: #如果是超时错误 
             # Handle timeout specially - don't retry, just return timeout result
-            #logger.warning(f"Evaluation timed out after {self.config.evaluator.timeout}s")
+            logger.error("Evaluation timeout occurred", 
+                        program_id=program_id,
+                        timeout_duration=self.config.evaluator.timeout)
 
             # Capture timeout artifacts if enabled
             if artifacts_enabled and program_id:
@@ -821,10 +1003,10 @@ class node_evaluate(AsyncNode):
 
         except Exception as e:
             last_exception = e
-            #logger.warning(
-            #     f"Evaluation attempt failed for program{program_id_str}: {str(e)}"
-            # )
-            traceback.logger.info_exc()
+            logger.error("Evaluation failed with exception", 
+                        program_id=program_id,
+                        error=str(e),
+                        error_type=type(e).__name__)
 
             # Capture failure artifacts if enabled
             if artifacts_enabled and program_id:
@@ -833,17 +1015,19 @@ class node_evaluate(AsyncNode):
                     "traceback": traceback.format_exc(),
                     "failure_stage": "evaluation",
                 }
+
         finally:
             # Clean up temporary file
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
-    # All retries failed
-        #logger.error(
-        #     f"All evaluation attempts failed for program{program_id_str}. Last error: {str(last_exception)}"
-        # )
+                logger.debug("Temporary file cleaned up", temp_file_path=temp_file_path)
+
+        # All retries failed
+        logger.error("All evaluation attempts failed", 
+                    program_id=program_id,
+                    last_error=str(last_exception) if last_exception else "Unknown")
         eval_result.metrics.update({"error": 0.0})
         return eval_result , artifact_update
-
 
 class node_sample_parent_inspiration(SyncNode):
     '''
@@ -884,50 +1068,70 @@ class node_sample_parent_inspiration(SyncNode):
         self.island_id = f"Island_{island_id}" #成员变量的名称
         self.client = None
     def execute(self,state:IslandState)->Tuple[Program,List[Program]]:
-        # state_island:IslandState = getattr(state, self.island_id)
+        logger.step("Starting parent and inspiration sampling", island_id=state.id)
+        
         try:
-            
+            logger.debug("Sampling parent program", island_id=state.id)
             parent_program = self._sample_parent(state)
             if parent_program is None:
-                #logger.error(f"采样父代程序失败: 返回None")
+                logger.error("Parent program sampling failed, returned None", island_id=state.id)
                 return None,[]
             
             parent_id = parent_program.id
-            #logger.info(f"采样父代成功 父代ID:{parent.id}")
+            logger.info("Parent program sampled successfully", 
+                       island_id=state.id,
+                       parent_id=parent_id)
             
         except Exception as e:
-            #logger.error(f"采样父代程序失败: {e}")s
+            logger.error("Parent program sampling failed with exception", 
+                        island_id=state.id,
+                        error=str(e),
+                        error_type=type(e).__name__)
             return None,[]
 
+        logger.debug("Sampling inspiration programs", 
+                    island_id=state.id,
+                    parent_id=parent_id,
+                    target_count=self.n)
         inspirations = self._sample_inspirations(state,parent_id)
-        logger.info(f"采样灵感程序成功 灵感程序ID:{inspirations}")
+        logger.info("Inspiration programs sampled successfully", 
+                   island_id=state.id,
+                   inspiration_count=len(inspirations),
+                   inspiration_ids=inspirations)
         return parent_program,inspirations
 
     def __call__(self, state: IslandState, config: Optional[Any] = None) -> Dict[str, Any]:
-
-        # 执行采样逻辑
-        # logger.info(f"岛屿{state.IslandState.id}的node_sample_parent_inspiration开始")
-        logger.info(f"Island:{state.id} START node_sample_parent_inspiration")
-        parent_program,inspirations = self.execute(state)
-        # state_island:IslandState = getattr(state, self.island_id)
-        # state_island.sample_program = parent_program
-        # state_island.sample_inspirations = inspirations
-        # state_island.status = IslandStatus.SAMPLE
-        logger.info(f"Island:{state.id} END node_sample_parent_inspiration")
-        # 只返回需要更新的字段，让LangGraph的reducer处理并发
-        if self.client is None:
-            self.client = SimpleClient(self.config.port)
-        update_dict = {
-            "sample_program":parent_program,
-            "sample_inspirations":inspirations,
-            "status":IslandStatus.SAMPLE
-        }
-        self.client.send_message({
-                "island_id":state.id,
-                "update_dict":update_dict,
-                
-            })
-        return update_dict
+        logger.step("node_sample_parent_inspiration __call__ method invoked", island_id=state.id)
+        
+        try:
+            # 执行采样逻辑
+            parent_program,inspirations = self.execute(state)
+            logger.info("node_sample_parent_inspiration __call__ method completed successfully", 
+                       island_id=state.id,
+                       parent_sampled=parent_program is not None,
+                       inspiration_count=len(inspirations) if inspirations else 0)
+            
+            # 只返回需要更新的字段，让LangGraph的reducer处理并发
+            if self.client is None:
+                self.client = SimpleClient(self.config.port)
+            
+            update_dict = {
+                "sample_program":parent_program,
+                "sample_inspirations":inspirations,
+                "status":IslandStatus.BUILD_PROMPT
+            }
+            
+            self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+            return update_dict
+        except Exception as e:
+            logger.error("node_sample_parent_inspiration __call__ method failed", 
+                        island_id=state.id,
+                        error=str(e))
+            raise
 
     def _sample_inspirations(self,state:IslandState,parent_id:str):
         '''
@@ -949,6 +1153,11 @@ class node_sample_parent_inspiration(SyncNode):
             List[Program]: 灵感程序列表
 
         '''
+        logger.step("Starting inspiration sampling", 
+                   island_id=state.id,
+                   parent_id=parent_id,
+                   target_count=self.n)
+        
         inspirations = []
 
         #若最优程序存在 且与父代不同 且在所有的程序中 则加入灵感程序
@@ -957,28 +1166,41 @@ class node_sample_parent_inspiration(SyncNode):
             and state.all_best_program.id != parent_id
             and state.all_best_program.id in state.all_programs.get_program_ids()
         ):
-
             inspirations.append(state.all_best_program.id)
-            #logger.info(f"在灵感程序候选列表中加入顶级程序 inspiration:{inspirations}")
+            logger.debug("Added best program to inspirations", 
+                        island_id=state.id,
+                        best_program_id=state.all_best_program.id)
 
         # 添加顶级程序作为灵感
         top_n = max(1, int(self.n * self.config.island.elite_selection_ratio))
+        logger.debug("Sampling top programs", 
+                    island_id=state.id,
+                    top_n=top_n,
+                    elite_ratio=self.config.island.elite_selection_ratio)
+        
         top_programs = get_top_programs(state,n=top_n,metric=self.metric)
         for program in top_programs:
             if program.id not in inspirations and program.id != parent_id:
                 inspirations.append(program.id)
-                #logger.info(f"在灵感程序候选列表中加入顶级程序 inspiration:{inspirations}")
+                logger.debug("Added top program to inspirations", 
+                           island_id=state.id,
+                           top_program_id=program.id)
 
         # 添加多样性程序
         if len(state.all_programs) > self.n and len(inspirations) < self.n:
+            logger.step("Sampling diversity programs", 
+                       island_id=state.id,
+                       remaining_slots=self.n - len(inspirations))
+            
             # 计算要添加的多样性程序数量（最多到剩余位置）
             remaining_slots = self.n - len(inspirations)
 
-
             # 从不同的特征格子采样以获得多样性
-
             feature_coords = _calculate_feature_coords(self.config,state,state.all_programs.get_program(parent_id))#这里获得的是一个描述父代多样性的坐标
-            #logger.info(f"计算多样性坐标 多样性坐标:{feature_coords}")
+            logger.debug("Calculated feature coordinates", 
+                        island_id=state.id,
+                        feature_coords=feature_coords)
+            
             # 从父代附近的特征格子获取程序
             nearby_programs = []
             for _ in range(remaining_slots):
@@ -999,7 +1221,10 @@ class node_sample_parent_inspiration(SyncNode):
                         and program_id in state.all_programs
                     ):
                         nearby_programs.append(state.all_programs.get_program(program_id).id)
-                        #logger.info(f"在灵感程序候选列表中加入多样性程序 inspiration:{inspirations}")
+                        logger.debug("Added diversity program to inspirations", 
+                                   island_id=state.id,
+                                   diversity_program_id=program_id)
+            
             # 如果需要更多，添加随机程序
             if len(inspirations) + len(nearby_programs) < self.n:
                 remaining = self.n - len(inspirations) - len(nearby_programs)
@@ -1013,16 +1238,21 @@ class node_sample_parent_inspiration(SyncNode):
 
                 if available_ids:
                     random_ids = random.sample(available_ids, min(remaining, len(available_ids)))
-                    # random_programs = [state.all_programs.get_program(pid) for pid in random_ids]
-                    # nearby_programs.extend(random_programs)
                     inspirations.extend(random_ids)
-                    #logger.info(f"在灵感程序候选列表中加入随机程序 inspiration:{inspirations}")
+                    logger.debug("Added random programs to inspirations", 
+                               island_id=state.id,
+                               random_count=len(random_ids))
+            
             inspirations.extend(nearby_programs)
             
         # 保持顺序去重 inspirations
         seen = set()
         inspirations = [x for x in inspirations if not (x in seen or seen.add(x))]
-        #logger.info(f"去重后的灵感程序列表 inspiration:{inspirations}")
+        logger.info("Inspiration sampling completed", 
+                   island_id=state.id,
+                   final_count=len(inspirations[:self.n]),
+                   inspiration_ids=inspirations[:self.n])
+        
         return inspirations[:self.n]
     def _sample_parent(self,state:IslandState) -> Optional[Program | None | Any]:
         """
@@ -1036,19 +1266,26 @@ class node_sample_parent_inspiration(SyncNode):
         Returns:
             Program: 选中的父代程序
         """
+        logger.step("Starting parent sampling strategy selection", island_id=state.id)
+        
         # 使用探索比例和利用比例决定采样策略
         rand_val = random.random()
+        logger.debug("Sampling strategy random value", 
+                    island_id=state.id,
+                    rand_val=rand_val,
+                    exploration_ratio=self.config.island.exploration_ratio,
+                    exploitation_ratio=self.config.island.exploitation_ratio)
 
         if rand_val < self.config.island.exploration_ratio:
-            #logger.info("node_sample_parent_inspiration: 使用探索性采样")
+            logger.info("Using exploration sampling strategy", island_id=state.id)
             # 探索：从当前岛屿采样（多样性采样）
             return self._sample_exploration_parent(state)
         elif rand_val < self.config.island.exploration_ratio + self.config.island.exploitation_ratio:
-            #logger.info("node_sample_parent_inspiration: 使用利用性采样")
+            logger.info("Using exploitation sampling strategy", island_id=state.id)
             # 利用：从归档采样（精英程序）
             return self._sample_exploitation_parent(state)
         else:
-            #logger.info("node_sample_parent_inspiration: 使用随机性采样")
+            logger.info("Using random sampling strategy", island_id=state.id)
             # 随机：从任何程序采样（剩余概率）
             return self._sample_random_parent(state)
         
@@ -1086,13 +1323,20 @@ class node_sample_parent_inspiration(SyncNode):
             - 该方法是探索-利用权衡策略的一部分
             - 随机采样有助于维持遗传算法的多样性
         """
+        logger.step("Starting exploration parent sampling", island_id=state.id)
+        
         # 获取当前岛屿的程序ID列表
         # current_island索引对应当前子图处理的岛屿
         current_island_programs = state.programs.get_program_ids()
+        logger.debug("Retrieved current island programs", 
+                    island_id=state.id,
+                    program_count=len(current_island_programs))
 
         # 岛屿完整性验证
         # 正常情况下每个岛屿都应该包含至少一个初始程序
         if not current_island_programs:
+            logger.error("Island not properly initialized, program list is empty", 
+                        island_id=state.id)
             raise ValueError(
                 f"岛屿 {state.id} 未正确初始化，程序列表为空。"
                 f"请确保初始程序已正确设置到所有岛屿中。"
@@ -1101,11 +1345,18 @@ class node_sample_parent_inspiration(SyncNode):
         # 探索性随机采样
         # 使用random.choice确保每个程序被选中的概率相等
         parent_id = random.choice(list(current_island_programs))
+        logger.info("Exploration parent selected", 
+                   island_id=state.id,
+                   selected_parent_id=parent_id)
 
         # 从全局程序字典中获取完整的Program对象
         # 这里假设程序ID的一致性已经在其他地方得到保证
+        selected_program = state.all_programs.get_program(parent_id)
+        logger.debug("Exploration parent program retrieved", 
+                    island_id=state.id,
+                    parent_id=parent_id)
 
-        return state.all_programs.get_program(parent_id)
+        return selected_program
 
     def _sample_exploitation_parent(self, state: IslandState) -> Optional[Program | None | Any]:
         """
@@ -1117,23 +1368,36 @@ class node_sample_parent_inspiration(SyncNode):
 
         算法流程：
         """
+        logger.step("Starting exploitation parent sampling", island_id=state.id)
 
         archive_programs_ids = state.archive.get_program_ids() # 精英归档的id集合 archive在初始化时候会被初始化 
-        #logger.info(f"node_sample_parent_inspiration: 精英归档程序: {archive_programs_ids}")
+        logger.debug("Retrieved archive programs", 
+                    island_id=state.id,
+                    archive_count=len(archive_programs_ids))
+        
         # 尽可能获得当前岛屿内部的精英归档
         archive_in_current_island = [pid for pid in archive_programs_ids if pid in state.programs.get_program_ids()]
-        #logger.info(f"node_sample_parent_inspiration: 当前岛屿{state.id}的精英归档程序: {archive_in_current_island}")
+        logger.debug("Filtered archive programs in current island", 
+                    island_id=state.id,
+                    current_island_archive_count=len(archive_in_current_island))
+        
         #优先从自己的岛屿上采样 如果自己的岛屿上没有精英归档类别的程序 就随机采样
-
         if len(archive_in_current_island) > 0: #如果自己的岛屿上有精英归档类别的程序 则从自己的岛屿上采样
-            #logger.info("node_sample_parent_inspiration: 从自己的岛屿上采样")
-            return state.all_programs.get_program(random.choice(archive_in_current_island))
+            selected_parent_id = random.choice(archive_in_current_island)
+            logger.info("Selected exploitation parent from current island archive", 
+                       island_id=state.id,
+                       selected_parent_id=selected_parent_id)
+            return state.all_programs.get_program(selected_parent_id)
         else: #如果自己的岛屿上没有精英归档类别的程序 则从所有岛屿的精英归档中采样
             if len(archive_programs_ids) > 0:
-                #logger.info("node_sample_parent_inspiration: 从所有岛屿的精英归档中采样")
-                return state.all_programs.get_program(random.choice(archive_programs_ids))
+                selected_parent_id = random.choice(archive_programs_ids)
+                logger.info("Selected exploitation parent from global archive", 
+                           island_id=state.id,
+                           selected_parent_id=selected_parent_id)
+                return state.all_programs.get_program(selected_parent_id)
             else:
-                #logger.warning("node_sample_parent_inspiration: 没有精英归档程序，使用随机性采样")
+                logger.warning("No archive programs available, falling back to random sampling", 
+                             island_id=state.id)
                 return self._sample_random_parent(state)
 
     def _sample_random_parent(self,state:IslandState) -> Optional[Program | None | Any]:
@@ -1143,15 +1407,33 @@ class node_sample_parent_inspiration(SyncNode):
         Returns:
             Program: 选中的父代程序
         """
+        logger.step("Starting random parent sampling", island_id=state.id)
+        
         if not state.all_programs:
+            logger.error("No programs available for random sampling", island_id=state.id)
             raise ValueError("No programs available for sampling")
 
         # 从自己岛屿上的所有程序中随机采样
         current_island_programs = state.programs.get_program_ids()
+        logger.debug("Retrieved current island programs for random sampling", 
+                    island_id=state.id,
+                    program_count=len(current_island_programs))
+        
         if not current_island_programs:
+            logger.error("Current island program list is empty", island_id=state.id)
             raise ValueError(f"当前岛屿 {state.id} 的程序列表为空")
+        
         program_id = random.choice(list(current_island_programs))
-        return state.all_programs.get_program(program_id)
+        logger.info("Random parent selected", 
+                   island_id=state.id,
+                   selected_parent_id=program_id)
+        
+        selected_program = state.all_programs.get_program(program_id)
+        logger.debug("Random parent program retrieved", 
+                    island_id=state.id,
+                    parent_id=program_id)
+        
+        return selected_program
 
 class node_build_prompt(SyncNode):
     '''
@@ -1194,73 +1476,117 @@ class node_build_prompt(SyncNode):
         self.prompt_sampler = PromptSampler_langchain(config=config.prompt)
         self.client = None
     def execute(self,state:IslandState):
-        #logger.info(f"岛屿{self.island_id}的构建prompt开始")
-        return self._build_prompt(state)
+        logger.step("Starting prompt building", island_id=state.id)
+        prompt = self._build_prompt(state)
+        logger.info("Prompt building completed", 
+                   island_id=state.id,
+                   prompt_length=len(prompt) if prompt else 0)
+        return prompt
     def __call__(self, state: IslandState, config: Optional[Any] = None) -> Dict[str, Any]:
-        logger.info(f"Island:{state.id} START node_build_prompt")
-        prompt = self.execute(state)
-        logger.info(f"Island:{state.id} END node_build_prompt")
-        if self.client is None:
-            self.client = SimpleClient(self.config.port)
-        update_dict = {
-            "prompt": prompt,
-            "status": IslandStatus.BUILD_PROMPT
-        }
-        self.client.send_message({
-                "island_id":state.id,
-                "update_dict":update_dict,
-                
-            })
-        return update_dict
+        logger.step("node_build_prompt __call__ method invoked", island_id=state.id)
+        
+        try:
+            prompt = self.execute(state)
+            logger.info("node_build_prompt __call__ method completed successfully", 
+                       island_id=state.id,
+                       prompt_created=bool(prompt))
+            
+            if self.client is None:
+                self.client = SimpleClient(self.config.port)
+            
+            update_dict = {
+                "prompt": prompt,
+                "status": IslandStatus.LLM_GENERATE
+            }
+            
+            self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+            return update_dict
+        except Exception as e:
+            logger.error("node_build_prompt __call__ method failed", 
+                        island_id=state.id,
+                        error=str(e))
+            raise
     def _build_prompt(self,state:IslandState)->str:
+        logger.step("Starting prompt construction", island_id=state.id)
 
         # 若当前program为空 则使用父代程序
         current_program_id = state.latest_program.id if state.latest_program.id is not None else state.sample_program.id
         current_program = state.all_programs.get(current_program_id)
         
+        logger.debug("Retrieved current program", 
+                    island_id=state.id,
+                    current_program_id=current_program_id,
+                    current_program_exists=current_program is not None)
+        
         if current_program is None:
-            #logger.error(f"当前程序为空: {current_program_id}")
+            logger.error("Current program is empty", 
+                        island_id=state.id,
+                        current_program_id=current_program_id)
             return ""
 
         parent_program = state.all_programs.get(state.sample_program.id)
+        logger.debug("Retrieved parent program", 
+                    island_id=state.id,
+                    parent_program_id=state.sample_program.id,
+                    parent_program_exists=parent_program is not None)
+        
         if parent_program is None:
-            #logger.error(f"父代程序为空: {state.sample_program.id}")
+            logger.error("Parent program is empty", 
+                        island_id=state.id,
+                        parent_program_id=state.sample_program.id)
             return ""
         
         parent_code = parent_program.code
         parent_metrics = parent_program.metrics
-        #logger.info(f"岛屿{self.island_id}的父代程序metrics: {parent_program.to_dict()}")
+        logger.debug("Extracted parent program information", 
+                    island_id=state.id,
+                    parent_code_length=len(parent_code),
+                    parent_metrics_count=len(parent_metrics))
 
+        logger.step("Building previous programs history", island_id=state.id)
         previous_programs = []
         #当前的父代程序
 
-        for _ in range(3):
+        for i in range(3):
             #如果父代程序有父代程序 则将父代程序的父代程序加入previous_programs 否则结束循环
             if isinstance(parent_program,Program) and parent_program.parent_id:
-                previous_programs.append(state.all_programs.get(parent_program.parent_id))
-                parent_program = state.all_programs.get(parent_program.parent_id)
-            
+                previous_program = state.all_programs.get(parent_program.parent_id)
+                if previous_program:
+                    previous_programs.append(previous_program)
+                    logger.debug("Added previous program to history", 
+                               island_id=state.id,
+                               generation=i+1,
+                               previous_program_id=parent_program.parent_id)
+                parent_program = previous_program
             else:
+                logger.debug("Reached end of program history", 
+                           island_id=state.id,
+                           history_depth=i)
                 break
-        # if previous_programs != []:
-        #     # previous_programs = [state.all_programs.get_program(pid).to_dict() for pid in previous_programs if pid is not None]
-        #     #logger.info(f"岛屿{self.island_id}的previous_programs: {previous_programs}")
-        # else:
-        #     previous_programs = []
 
-
-
+        logger.step("Processing inspiration programs", island_id=state.id)
         inspirations = state.sample_inspirations
+        logger.debug("Retrieved inspiration programs", 
+                    island_id=state.id,
+                    inspiration_count=len(inspirations))
         
         inspirations_programs = [state.all_programs.get_program(ins).to_dict() for ins in inspirations if ins is not None]
-        
-        #logger.info(f"岛屿{self.island_id}在build_prompt中的inspirations: {inspirations}")
+        logger.debug("Converted inspiration programs to dict format", 
+                    island_id=state.id,
+                    converted_count=len(inspirations_programs))
 
+        logger.step("Retrieving top programs", island_id=state.id)
         top_programs = [i.to_dict() for i in get_top_programs(state,n=5,metric=self.metric)]
+        logger.debug("Retrieved top programs", 
+                    island_id=state.id,
+                    top_program_count=len(top_programs))
         
-        #logger.info(f"岛屿{self.island_id}在build_prompt中的top_programs: {top_programs}")
-        
-        return self.prompt_sampler.build_prompt(
+        logger.step("Building final prompt", island_id=state.id)
+        prompt = self.prompt_sampler.build_prompt(
             current_program = current_program.code,
             parent_program = parent_code,
             program_metrics = parent_metrics,  # 程序指标字典
@@ -1272,6 +1598,15 @@ class node_build_prompt(SyncNode):
             diff_based_evolution = self.config.diff_based_evolution,   # 是否使用基于差异的演化
             program_artifacts = get_artifacts(state,current_program.id),  # 程序工件
         )
+        
+        logger.info("Prompt construction completed", 
+                   island_id=state.id,
+                   prompt_length=len(prompt),
+                   evolution_round=state.iteration,
+                   diff_based_evolution=self.config.diff_based_evolution,
+                   prompt=prompt)
+        
+        return prompt
 
 class node_llm_generate(SyncNode):
     '''
@@ -1334,29 +1669,35 @@ class node_llm_generate(SyncNode):
         if self.diff_based_evolution: #如果是基于差异的演化 那么使用
             self.structure = ResponseFormatter_template_diff
             self.key = ["suggestion","diff_code"]
-            #logger.info(f"岛屿{self.island_id}的LLM生成使用基于差异的演化")
+            logger.info("LLM generation configured for diff-based evolution")
         else:
             self.structure = ResponseFormatter_template_rewrite
             self.key = ["suggestion","rewrite_code"]
-            #logger.info(f"岛屿{self.island_id}的LLM生成使用基于重写的演化")
+            logger.info("LLM generation configured for rewrite-based evolution")
         self.client =  None
 
     def _llm_generate(self,state:IslandState):
         return self.llm.invoke(state.prompt,self.structure,self.key)
     def execute(self,state:IslandState):
+        logger.step("Starting LLM program generation", 
+                   island_id=state.id,
+                   evolution_type="diff-based" if self.diff_based_evolution else "rewrite-based")
         
         llm_response:Optional[Dict[str,Any]|None] = self._llm_generate(state)
-        # logger.info(f"岛屿{self.island_id}的LLM生成结果: {llm_response}")
-        #logger.info(f"岛屿{self.island_id}的LLM生成结果: {llm_response}")
-        # logger.info(f"岛屿{self.island_id}的LLM生成成功")
+        logger.debug("LLM response received", 
+                    island_id=state.id,
+                    response_type=type(llm_response),
+                    response_keys=list(llm_response.keys()) if llm_response else [])
+        
         generation = state.iteration
         if self.client is None:
             self.client = SimpleClient(self.config.port)
+        
         if llm_response is None:
             # 失败 
-            #logger.info(f"岛屿{self.island_id}在llm_generate的过程中的response为None")
+            logger.error("LLM generation failed, response is None", island_id=state.id)
             update_dict = {
-                "status": IslandStatus.LLM_GENERATE,
+                "status": IslandStatus.SAMPLE,
                 "llm_generate_success":False,
                 "iteration":generation+1,#重新采样 代数+1
                 "now_meeting":state.now_meeting+1,
@@ -1369,12 +1710,13 @@ class node_llm_generate(SyncNode):
             })
             return update_dict
         if self.diff_based_evolution:
-            #logger.info(f"岛屿{self.island_id}使用基于diff的进化方式")
+            logger.step("Processing diff-based evolution", island_id=state.id)
             parent_program = state.all_programs.get_program(state.sample_program.id)
             if parent_program is None:
-                #logger.error(f"父代程序为空: {state.sample_program.id}")
+                logger.error("Parent program is empty for diff-based evolution", 
+                           island_id=state.id,
+                           parent_program_id=state.sample_program.id)
                 update_dict = {
-                    # "status": (self.island_id,IslandStatus.LLM_GENERATE),
                     "llm_generate_success":False,
                     "iteration":generation+1,#重新采样 代数+1
                     "now_meeting":state.now_meeting+1,
@@ -1386,14 +1728,25 @@ class node_llm_generate(SyncNode):
                     
                 })
                 return update_dict
+            
             parent_code = parent_program.code 
             diff_code = llm_response["diff_code"]
             suggestion = llm_response["suggestion"]
+            logger.debug("Extracted diff code and suggestion", 
+                        island_id=state.id,
+                        diff_code_length=len(diff_code),
+                        suggestion_length=len(suggestion))
+            
             diff_blocks = extract_diffs(diff_code)
+            logger.debug("Extracted diff blocks", 
+                        island_id=state.id,
+                        diff_blocks_count=len(diff_blocks) if diff_blocks else 0)
+            
             if not diff_blocks or diff_blocks == []:
-                #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有diff_blocks")
+                logger.warning("No diff blocks found in LLM response", 
+                             island_id=state.id,
+                             generation=generation)
                 update_dict = {
-                    # "status": (self.island_id,IslandStatus.LLM_GENERATE),
                     "llm_generate_success":False,
                     "iteration":generation+1,#重新采样 代数+1
                     "now_meeting":state.now_meeting+1,
@@ -1405,11 +1758,21 @@ class node_llm_generate(SyncNode):
                     
                 })
                 return update_dict
+            
+            logger.step("Applying diff to parent code", island_id=state.id)
             child_code = apply_diff(parent_code,diff_code)
             change_summary = format_diff_summary(diff_blocks)
+            logger.debug("Diff applied successfully", 
+                        island_id=state.id,
+                        child_code_length=len(child_code),
+                        change_summary=change_summary)
+            
             #生成子代的id
             child_id = str(uuid.uuid4())
-            #logger.info(f"成功生成岛屿{self.island_id}的子代id: {child_id}")
+            logger.info("Child program created successfully", 
+                       island_id=state.id,
+                       child_id=child_id,
+                       parent_id=parent_program.id)
             
             child_Program = Program(id=child_id,
                                     code=child_code,
@@ -1419,7 +1782,7 @@ class node_llm_generate(SyncNode):
             update_dict = {
                 "diff_message": diff_code,
                 "suggestion_message": suggestion,
-                "status": IslandStatus.LLM_GENERATE,
+                "status": IslandStatus.EVALUATE_CHILD,
                 "llm_generate_success":True,
                 "latest_program":child_Program,
                 "change_summary":change_summary,
@@ -1431,11 +1794,18 @@ class node_llm_generate(SyncNode):
             })
             return update_dict
         else :  # 基于重写的演化
+            logger.step("Processing rewrite-based evolution", island_id=state.id)
             rewrite_code = llm_response["rewrite_code"]
+            logger.debug("Extracted rewrite code", 
+                        island_id=state.id,
+                        rewrite_code_length=len(rewrite_code) if rewrite_code else 0)
+            
             if rewrite_code is None or rewrite_code == "":
-                #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有rewrite_code")
+                logger.warning("No rewrite code found in LLM response", 
+                             island_id=state.id,
+                             generation=generation)
                 update_dict = {
-                    "status": IslandStatus.LLM_GENERATE,
+                    "status": IslandStatus.SAMPLE,
                     "llm_generate_success":False,
                     "iteration":generation+1,#重新采样 代数+1
                     "now_meeting":state.now_meeting+1,
@@ -1447,24 +1817,37 @@ class node_llm_generate(SyncNode):
                     
                 })
                 return update_dict
+            
+            logger.step("Parsing full rewrite code", island_id=state.id)
             new_code = parse_full_rewrite(rewrite_code,state.language)
+            logger.debug("Parsed rewrite code", 
+                        island_id=state.id,
+                        new_code_length=len(new_code) if new_code else 0)
+            
             if not new_code:
-                #logger.warning(f"{state.status[self.island_id]}:岛屿{self.island_id}第{state.generation_count[self.island_id]}轮LLM的输出没有new_code")
+                logger.warning("Failed to parse rewrite code", 
+                             island_id=state.id,
+                             generation=generation)
                 return {
-                        "status": IslandStatus.LLM_GENERATE,
+                        "status": IslandStatus.SAMPLE,
                         "llm_generate_success":False,
                         "iteration":generation+1,#重新采样 代数+1
                         "now_meeting":state.now_meeting+1,
                         "next_meeting":state.next_meeting-1,
                     }
+            
             change_summary = "full rewrite"
             child_id = str(uuid.uuid4())
-            #logger.info(f"成功生成岛屿{self.island_id}的子代id: {child_id}")
+            logger.info("Child program created successfully from rewrite", 
+                       island_id=state.id,
+                       child_id=child_id,
+                       parent_id=state.sample_program.id)
+            
             child_program = Program(id=child_id,code=new_code,parent_id=state.sample_program.id)
             update_dict = {
                 "rewrite_message":rewrite_code,
                 "suggestion_message":llm_response["suggestion"],
-                "status": IslandStatus.LLM_GENERATE,
+                "status": IslandStatus.EVALUATE_CHILD,
                 "llm_generate_success":True,
                 "latest_program":child_program,
                 "change_summary":change_summary,
@@ -1476,14 +1859,20 @@ class node_llm_generate(SyncNode):
             })
             return update_dict
     def __call__(self,state:IslandState):
-        logger.info(f"Island:{state.id} START node_llm_generate")
-        result = self.execute(state)
-        logger.info(f"Island:{state.id} END node_llm_generate")
-        return result
-    
-    
-    
-    
+        logger.step("node_llm_generate __call__ method invoked", island_id=state.id)
+        
+        try:
+            result = self.execute(state)
+            logger.info("node_llm_generate __call__ method completed successfully", 
+                       island_id=state.id,
+                       generation_success=result.get("llm_generate_success", False))
+            return result
+        except Exception as e:
+            logger.error("node_llm_generate __call__ method failed", 
+                        island_id=state.id,
+                        error=str(e))
+            raise
+  
 class node_update(SyncNode):
     '''
     程序库更新节点
@@ -1544,35 +1933,60 @@ class node_update(SyncNode):
         self.config = config
         self.client = None
     def __call__(self,state:IslandState):
-        logger.info(f"Island:{state.id} START node_update")
-        update_dict = self.execute(state)
-        logger.info(f"Island:{state.id} END node_update")
-        if self.client is None:
-            self.client = SimpleClient(self.config.port)
-        self.client.send_message({
-                "island_id":state.id,
-                "update_dict":update_dict,
-                
-            })
-        return update_dict
+        logger.step("node_update __call__ method invoked", island_id=state.id)
+        
+        try:
+            update_dict = self.execute(state)
+            logger.info("node_update __call__ method completed successfully", 
+                       island_id=state.id,
+                       update_fields_count=len(update_dict))
+            
+            if self.client is None:
+                self.client = SimpleClient(self.config.port)
+            
+            self.client.send_message({
+                    "island_id":state.id,
+                    "update_dict":update_dict,
+                    
+                })
+            return update_dict
+        except Exception as e:
+            logger.error("node_update __call__ method failed", 
+                        island_id=state.id,
+                        error=str(e))
+            raise
     
     def execute(self,state:IslandState):
+        logger.step("Starting program library update", 
+                   island_id=state.id,
+                   current_program_id=state.latest_program.id)
         
         # 此时all_programs island_program 中还没有新的program 
         current_program = state.latest_program
+        logger.debug("Retrieved current program for update", 
+                    island_id=state.id,
+                    current_program_id=current_program.id)
         
         # 与所有程序的副本相比 更好的程序
+        logger.step("Checking global best program update", island_id=state.id)
         best_program = self._best_program_update(state) 
+        logger.debug("Global best program check completed", 
+                    island_id=state.id,
+                    best_program_updated=best_program is not None)
         
-       
         # 与当前岛屿上的程序相比 更好的程序
+        logger.step("Checking island best program update", island_id=state.id)
         best_program_each_island = self._best_program_this_island(state)
+        logger.debug("Island best program check completed", 
+                    island_id=state.id,
+                    island_best_updated=best_program_each_island is not None)
         
-        
+        logger.step("Updating island programs", island_id=state.id)
         island_programs_update = self._update_island_programs(state)
+        logger.debug("Island programs update completed", 
+                    island_id=state.id,
+                    update_type=island_programs_update[0] if island_programs_update else None)
         
-        
-        ##import pdb;pdb.set_trace()
         # 是否更新all_programs 取决于island_programs 
         all_programs_update = None 
         if island_programs_update is None:
@@ -1580,31 +1994,65 @@ class node_update(SyncNode):
         elif isinstance(island_programs_update,tuple):
             all_programs_update = island_programs_update
         else:
+            logger.error("Invalid island_programs_update format", 
+                        island_id=state.id,
+                        update_type=type(island_programs_update),
+                        update_length=len(island_programs_update))
             raise ValueError("island_programs_update must be a tuple of length 2 or 4, but you give me a {}".format(len(island_programs_update)))
 
+        logger.step("Updating newest program", island_id=state.id)
         newest_program_update = self._update_newest_program(state)
-        archive_update = self._update_archive(current_program,state)
-        feature_map_update = self._update_feature_map(current_program,state)
         
+        logger.step("Updating archive", island_id=state.id)
+        archive_update = self._update_archive(current_program,state)
+        logger.debug("Archive update completed", 
+                    island_id=state.id,
+                    archive_updated=archive_update is not None)
+        
+        logger.step("Updating feature map", island_id=state.id)
+        feature_map_update = self._update_feature_map(current_program,state)
+        logger.debug("Feature map update completed", 
+                    island_id=state.id,
+                    feature_map_updated=feature_map_update is not None)
+        
+        logger.step("Building final update dictionary", island_id=state.id)
         update_dict = {}
         if best_program is not None : 
             update_dict["all_best_program"] = best_program
+            logger.info("Global best program updated", 
+                       island_id=state.id,
+                       new_best_program_id=best_program.id)
             
         if best_program_each_island is not None:
             update_dict["best_program"] = best_program_each_island
+            logger.info("Island best program updated", 
+                       island_id=state.id,
+                       new_island_best_id=best_program_each_island.id)
         
         if island_programs_update is not None:
             update_dict["programs"] = island_programs_update # e.g ("add",self.island_id,current_program)
+            logger.info("Island programs updated", 
+                       island_id=state.id,
+                       update_operation=island_programs_update[0])
        
         update_dict["latest_program"] = newest_program_update
         if archive_update is not None:
             update_dict["archive"] = archive_update
+            logger.info("Archive updated", 
+                       island_id=state.id,
+                       archive_operation=archive_update[0])
             
         if feature_map_update is not None:
             update_dict["feature_map"] = feature_map_update
+            logger.info("Feature map updated", 
+                       island_id=state.id,
+                       feature_key=feature_map_update[0])
         
         if all_programs_update is not None:
             update_dict["all_programs"] = all_programs_update
+            logger.info("Global programs updated", 
+                       island_id=state.id,
+                       global_update_operation=all_programs_update[0])
         
         current_iteration = state.iteration
         
@@ -1612,7 +2060,18 @@ class node_update(SyncNode):
         update_dict["now_meeting"] = state.now_meeting + 1
         update_dict["next_meeting"] = state.next_meeting - 1
         
-        update_dict["status"] = IslandStatus.UPDATE
+        update_dict["status"] = IslandStatus.SAMPLE
+        
+        logger.info("Program library update completed", 
+                   island_id=state.id,
+                   total_updates=len(update_dict),
+                   new_iteration=current_iteration + 1,
+                   now_meeting=state.now_meeting,
+                   next_meeting=state.next_meeting,)
+        
+        return update_dict
+        
+        
         # for k,v in update_dict.items():
         #     logger.info(f"key:{k},value type:{type(v)}")
         ##import pdb;pdb.set_trace()
@@ -1622,56 +2081,110 @@ class node_update(SyncNode):
         '''
         如果当前程序更好 则返回需要更新的 best_program 和 best_program_id 和 best_metrics
         '''
+        logger.step("Checking global best program update", island_id=state.id)
         
         current_program = state.latest_program
-        
         best_program = state.all_best_program
         
+        logger.debug("Comparing current program with global best", 
+                    island_id=state.id,
+                    current_program_id=current_program.id,
+                    current_best_id=best_program.id if best_program else None)
+        
         if _is_better(current_program,best_program) or best_program is None:#若当前程序更好 或者best_program为空
+            logger.info("Global best program updated", 
+                       island_id=state.id,
+                       new_best_program_id=current_program.id,
+                       previous_best_id=best_program.id if best_program else None)
             best_program = current_program
-            # best_program_id = current_program.id
-            # best_metrics = current_program.metrics
-            #logger.info(f"🌟 在岛屿{self.island_id}第 {state.generation_count[self.island_id]} 次迭代发现新的最优解: {current_program.id}")
-            #logger.info(f"新指标: {format_metrics_safe(current_program.metrics)}")
             return best_program
         else:
+            logger.debug("Global best program unchanged", 
+                        island_id=state.id,
+                        current_program_id=current_program.id,
+                        best_program_id=best_program.id if best_program else None)
             return None
     def _best_program_this_island(self,state:IslandState)->Optional[Program|None]:
         '''
         获取当前岛屿上最好的程序 并比较 如果当前程序更好 则更新best_program_each_island中[self.island_id]的id
         '''
+        logger.step("Checking island best program update", island_id=state.id)
+        
         current_program = state.latest_program
         best_program_this_island = state.best_program
-        # best_program_this_island = state.all_programs.get_program(best_program_each_island_id)
-        ##import pdb;pdb.set_trace()
+
+        logger.debug("Comparing current program with island best", 
+                    island_id=state.id,
+                    current_program_id=current_program.id,
+                    island_best_id=best_program_this_island.id if best_program_this_island else None)
+
         if _is_better(current_program,best_program_this_island) or best_program_this_island is None:
+            logger.info("Island best program updated", 
+                       island_id=state.id,
+                       new_island_best_id=current_program.id,
+                       previous_island_best_id=best_program_this_island.id if best_program_this_island else None)
             best_program_this_island = current_program
             return best_program_this_island
         else:
+            logger.debug("Island best program unchanged", 
+                        island_id=state.id,
+                        current_program_id=current_program.id,
+                        island_best_id=best_program_this_island.id if best_program_this_island else None)
             return None
         
         
         
     def _update_island_programs(self,state:IslandState)->Optional[tuple[str, str, Program | Any | None]|Tuple[str,Program]|None]:
+        logger.step("Updating island programs", island_id=state.id)
+        
         #更新当前岛屿上的程序 这时候首先要检查岛屿上的程序个数是否超过max_island_programs_size
         max_island_programs_size = self.config.island.population_size
-        # current_program_id = state.current_program_id[self.island_id]
         current_program = state.latest_program
+        
+        logger.debug("Checking island program capacity", 
+                    island_id=state.id,
+                    current_program_count=len(state.programs),
+                    max_capacity=max_island_programs_size,
+                    current_program_id=current_program.id)
+        
         if len(state.programs) < max_island_programs_size:
+            logger.info("Adding new program to island (capacity available)", 
+                       island_id=state.id,
+                       current_program_id=current_program.id)
             return ("add",current_program)
         else:
             # 如果岛屿上的程序个数到达了峰值 需要移除某个程序
             # 当前的程序会和岛屿中最差的程序进行对比 如果当前程序更好 则移除最差的程序 并添加当前程序 否则不进行任何操作 
+            logger.step("Island at capacity, evaluating replacement", island_id=state.id)
+            
             island_programs = state.programs.get_all_programs() # 获取岛屿上的所有程序 Dict{program_id:Program}
             metrics_dict = {pid:program.metrics for pid,program in island_programs.items()}
             worst_program_id = min(metrics_dict,key=lambda x:safe_numeric_average(metrics_dict[x]))
             worst_program = state.programs.get_program(worst_program_id)
+            
+            logger.debug("Found worst program in island", 
+                        island_id=state.id,
+                        worst_program_id=worst_program_id,
+                        worst_program_metrics=worst_program.metrics if worst_program else None)
+            
             if _is_better(current_program,worst_program):
+                logger.info("Replacing worst program with current program", 
+                           island_id=state.id,
+                           current_program_id=current_program.id,
+                           replaced_program_id=worst_program_id)
                 return ("replace",worst_program_id,current_program)
             else:
+                logger.debug("Current program not better than worst, no replacement", 
+                            island_id=state.id,
+                            current_program_id=current_program.id,
+                            worst_program_id=worst_program_id)
                 return None
     def _update_newest_program(self,state:IslandState):
+        logger.step("Updating newest program", island_id=state.id)
         #更新当前岛屿上的最新程序 
+        logger.debug("Newest program updated", 
+                    island_id=state.id,
+                    newest_program_id=state.latest_program.id)
         return state.latest_program
     def _update_archive(self, program: Program,state:IslandState):
         """
@@ -1685,40 +2198,104 @@ class node_update(SyncNode):
         Args:
             program: 要考虑加入归档的程序对象
         """
+        logger.step("Updating archive", island_id=state.id)
+        
+        logger.debug("Checking archive capacity", 
+                    island_id=state.id,
+                    current_archive_size=len(state.archive),
+                    max_archive_size=self.config.archive_size,
+                    candidate_program_id=program.id)
+        
         #检查归档是否已满，未满则直接添加
         if len(state.archive) < self.config.archive_size:
-            
+            logger.info("Adding program to archive (capacity available)", 
+                       island_id=state.id,
+                       program_id=program.id)
             return ("add",program)
         
         elif len(state.archive) == self.config.archive_size: #已满 将其与最差的程序对比 并决定是否替换最差的程序
+            logger.step("Archive at capacity, evaluating replacement", island_id=state.id)
+            
             archive_programs = state.archive.get_all_programs()
             metrics_dict = {pid:program.metrics for pid,program in archive_programs.items()}
             worst_program_id = min(metrics_dict,key=lambda x:safe_numeric_average(metrics_dict[x]))
             worst_program = archive_programs[worst_program_id]
+            
+            logger.debug("Found worst program in archive", 
+                        island_id=state.id,
+                        worst_program_id=worst_program_id,
+                        worst_program_metrics=worst_program.metrics if worst_program else None)
+            
             if _is_better(program,worst_program):
+                logger.info("Replacing worst program in archive", 
+                           island_id=state.id,
+                           new_program_id=program.id,
+                           replaced_program_id=worst_program_id)
                 return ("replace",worst_program_id,program)
             else:
+                logger.debug("Candidate program not better than worst in archive", 
+                            island_id=state.id,
+                            candidate_program_id=program.id,
+                            worst_program_id=worst_program_id)
                 return None
     def _update_feature_map(self,program:Program,state:IslandState):
+        logger.step("Updating feature map", island_id=state.id)
+        
         #更新特征网格
         #计算当前程序在特征网格中的坐标
         feature_coords = _calculate_feature_coords(self.config,state,program)
+        logger.debug("Calculated feature coordinates", 
+                    island_id=state.id,
+                    program_id=program.id,
+                    feature_coords=feature_coords)
 
         # 更新MAP-Elites特征网格
         feature_key = _feature_coords_to_key(feature_coords)
+        logger.debug("Generated feature key", 
+                    island_id=state.id,
+                    feature_key=feature_key)
         
-        should_replace = feature_key  in state.feature_map #若feature_key在feature_map中，则需要替换
+        should_replace = feature_key in state.feature_map #若feature_key在feature_map中，则需要替换
+        logger.debug("Checking if feature key exists in map", 
+                    island_id=state.id,
+                    feature_key=feature_key,
+                    key_exists=should_replace)
         
         if should_replace:#若需要替换 取出feature_map中对应的program_id
             program_id_need_replace = state.feature_map[feature_key] #旧的
+            logger.debug("Found existing program at feature key", 
+                        island_id=state.id,
+                        feature_key=feature_key,
+                        existing_program_id=program_id_need_replace)
+            
             if program_id_need_replace not in state.all_programs: #如果旧的程序id不在all_programs中 则直接替换
+                logger.info("Replacing invalid program reference in feature map", 
+                           island_id=state.id,
+                           feature_key=feature_key,
+                           new_program_id=program.id,
+                           invalid_program_id=program_id_need_replace)
                 return (feature_key,program.id)
             else:
-                if _is_better(program,state.all_programs.get_program(program_id_need_replace)):
+                existing_program = state.all_programs.get_program(program_id_need_replace)
+                if _is_better(program,existing_program):
+                    logger.info("Replacing program in feature map (better performance)", 
+                               island_id=state.id,
+                               feature_key=feature_key,
+                               new_program_id=program.id,
+                               replaced_program_id=program_id_need_replace)
                     return (feature_key,program.id)
                 else:
+                    logger.debug("Existing program better, no replacement in feature map", 
+                                island_id=state.id,
+                                feature_key=feature_key,
+                                existing_program_id=program_id_need_replace,
+                                candidate_program_id=program.id)
                     return None
         else:#若不需要替换 则直接添加
+            logger.info("Adding new program to feature map", 
+                       island_id=state.id,
+                       feature_key=feature_key,
+                       program_id=program.id)
             return (feature_key,program.id)
 
 

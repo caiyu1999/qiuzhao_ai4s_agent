@@ -10,7 +10,8 @@ from typing import Any, Dict
 from dataclasses import is_dataclass, asdict
 from openevolve_graph.visualization.vis_class import visualize_data, best_program_vis, overall_information_vis
 from openevolve_graph.Graph.Graph_state import GraphState
-
+import logging 
+logger=logging.getLogger(__name__)
 
 
 

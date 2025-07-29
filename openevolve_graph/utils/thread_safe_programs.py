@@ -16,6 +16,8 @@ class Programs_container:
     """ 
     
     _programs: Dict[str, Program] = field(default_factory=dict)
+
+    
     
     
     def __contains__(self, key: str) -> bool:
@@ -35,6 +37,18 @@ class Programs_container:
     def _internal_remove(self, key: str) -> Optional[Program]:
         """内部移除程序方法"""
         return self._programs.pop(key, None)
+    
+    def update_best_program(self,program:Program)->None:
+        '''
+        更新岛屿内部的最好程序
+        '''
+        
+        #排序岛屿内部程序 依据metrics挑选出最佳程序 并更新best_program 
+        best_program = sorted(self._programs.values(), key=lambda x: x.metrics["combined_score"], reverse=True)[0]
+        self.best_program = best_program
+        
+
+        
     
     def _internal_get(self, key: str) -> Optional[Program | None | Any]:
         """内部获取程序方法"""
@@ -100,6 +114,13 @@ class Programs_container:
         """获取所有程序（基类 copy 方法的别名） 并存放在一个字典中"""
         
         return {id:self._internal_get(id) for id in self._internal_keys()}
+    
+    def get_all_programs_to_list(self)->List[Program]:
+        '''
+        获取所有程序 并返回List[Program]
+        '''
+        return self._internal_values()
+    
     def get_program_ids(self) -> List[str]:
         """获取所有程序ID（基类 keys 方法的别名）"""
           
@@ -109,7 +130,7 @@ class Programs_container:
         """获取所有程序（基类 values 方法的别名）"""
         
         return self._internal_values()
-    def copy(self) -> "ThreadSafePrograms":
+    def copy(self) -> "Programs_container":
         """复制程序容器"""
         
         return self._internal_copy()
@@ -118,6 +139,56 @@ class Programs_container:
     def from_dict(cls,programs:Dict[str,Program])->"Programs_container":
         """从字典创建程序容器"""
         return cls(programs)
+    
+    
+    
+    def get_top_programs(self,num:int)->List[Program]:
+        ''' 
+        获取岛屿内部的顶级程序 并返回List[Program]
+        '''
+        # 获取岛屿内部的程序
+        programs = self.get_all_programs_to_list() # List[Program]
+        
+        # 根据metrics进行排序 依据组合分数
+        programs_sorted = sorted(programs, key=lambda x: x.metrics["combined_score"], reverse=True) # List[Program]
+        
+        return programs_sorted[:num]
+    
+    
+    def get_num_programs(self)->int:
+        '''
+        获取岛屿内部的程序数量
+        '''
+        return len(self.get_all_programs_to_list())
+    
+    
+    def add_programs(self,programs:List[Program])->None:
+        '''
+        添加程序
+        '''
+        for program in programs:
+            self._internal_add(program.id,program)
+            
+            
+    def remove_programs(self,programs:List[Program])->None:
+        '''
+        移除程序
+        '''
+        for program in programs:
+            self._internal_remove(program.id)
+            
+    
+    
+    
+    
+    
+
+            
+            
+        
+
+
+
     
 
     

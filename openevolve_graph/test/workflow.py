@@ -48,8 +48,8 @@ logger = setup_root_logger(logger_dir, "INFO")
 
 
 
-def build_main_graph(config: Config):
-    node1 = node_init_status(config=config,next_meeting=10)
+def build_main_graph(config: Config,next_meeting: int  = 10):
+    node1 = node_init_status(config=config,next_meeting=next_meeting)
     graph_builder = StateGraph(GraphState)
     graph_builder.add_node("init_status", node1)
     graph_builder.add_edge(START, "init_status")
@@ -181,7 +181,7 @@ def save_checkpoint(config: Config, state: GraphState, generation_count_in_meeti
                         "metrics": state.best_program.metrics,
                         "language": state.best_program.language,
                         "timestamp": state.best_program.timestamp,
-                        "saved_at": time.time(),
+                        "saved_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                     },
                     f,
                     indent=2,
@@ -216,7 +216,7 @@ def main(dict_state: dict):
     
     
     # 构建主图 默认第一次开始(或者读取checkpoint后)10次迭代后进行meeting
-    main_graph = build_main_graph(config)
+    main_graph = build_main_graph(config,next_meeting=4)
 
     # 初始化节点状态
     state_init = init_status(main_graph, state)
@@ -240,7 +240,11 @@ def main(dict_state: dict):
     vis_thread = threading.Thread(target=vis_app.run, daemon=True)
     vis_thread.start()
     time.sleep(1)  # 等待可视化应用启动
-
+    
+    num_islands = config.island.num_islands
+    island_graph_list = [build_subgraph(str(i), config) for i in range(num_islands)]
+    
+    
 
     if len(state_init.islands) != config.island.num_islands:
         raise ValueError(f"检查点中的岛屿数量与配置中的岛屿数量不一致,检查点中的岛屿数量为 {len(state_init.islands)},配置中的岛屿数量为 {config.island.num_islands}")
@@ -248,22 +252,27 @@ def main(dict_state: dict):
 
     while iterations < config.max_iterations:
         logger.info(f"-------------------------------迭代次数: {state_init.iteration}/{config.max_iterations}--------------------------------")
-        num_islands = config.island.num_islands
+       
 
         island_state_dict = state_init.islands
         island_state_list = [v for k, v in island_state_dict.items()]
-        # print(island_state_list[0].now_meeting)
-
-        island_graph_list = [build_subgraph(str(i), config) for i in range(num_islands)]
 
         futures = [run_island(subgraph_i, island_state_i) for subgraph_i, island_state_i in zip(island_graph_list, island_state_list)]
 
         results = [f.result() for f in futures]
+        
         island_state_lists = [IslandState.from_dict(result) for result in results]
+        
+        logger.info(f"island_state_lists: {island_state_lists}")
 
         # 获取state 并保存在本地 meeting_interval 是距离下次meeting的迭代次数
         main_graph_state,meeting_interval = meeting(config, state_init, island_state_lists)
         
+        
+        for island_state in main_graph_state.islands.values():
+            assert island_state.next_meeting == meeting_interval
+            assert island_state.now_meeting == 0
+            
         # 通过线程安全的方式更新可视化数据
         server.init_vis_data(main_graph_state)
         
@@ -274,6 +283,7 @@ def main(dict_state: dict):
 
         # 更新迭代计数器
         iterations = main_graph_state.iteration
+       
         
     # 当所有迭代运行完成 打印最好的程序和精度
     logger.info(f"最好的程序: {main_graph_state.best_program}, 精度: {main_graph_state.best_program.metrics}")
@@ -335,7 +345,7 @@ if __name__ == "__main__":
     config.max_iterations = args.iterations if args.iterations else config.max_iterations
     
     config.checkpoint = args.checkpoint if args.checkpoint else config.checkpoint
-    config.resume = True
+    # config.resume = True
 
     test_dict = {
         "state": GraphState(),

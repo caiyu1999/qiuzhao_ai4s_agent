@@ -770,16 +770,16 @@ def _is_better(program1: Program, program2: Program) -> bool:
         # 如果都没有指标，使用最新的
         if not program1.metrics and not program2.metrics:
             return program1.timestamp > program2.timestamp
-
+        
+        # 优先检查combined_score（首选指标）
+        if "combined_score" in program1.metrics and "combined_score" in program2.metrics:
+            return program1.metrics["combined_score"] > program2.metrics["combined_score"]
+        
         # 如果只有一个有指标，它就更好
         if program1.metrics and not program2.metrics:
             return True
         if not program1.metrics and program2.metrics:
             return False
-
-        # 优先检查combined_score（首选指标）
-        if "combined_score" in program1.metrics and "combined_score" in program2.metrics:
-            return program1.metrics["combined_score"] > program2.metrics["combined_score"]
 
         # 后备使用所有数值指标的平均值
         avg1 = safe_numeric_average(program1.metrics)

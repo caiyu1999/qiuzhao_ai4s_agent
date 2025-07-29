@@ -11,7 +11,8 @@ from openevolve_graph.Graph.Graph_state import (
     reducer_for_feature_map)
 from openevolve_graph.program import Program 
 from openevolve_graph.Config import Config
-
+import logging 
+logger=logging.getLogger(__name__)
 '''
 这个类主要实现岛屿可视化的进度更新的数据类别定义
 
@@ -88,9 +89,9 @@ class visualize_data:
     best_program: best_program_vis = field(default_factory=best_program_vis)
     overall_information: overall_information_vis = field(default_factory=overall_information_vis)
     islands_state: dict[str,IslandState] = field(default_factory=dict)
-    
+    init_program: best_program_vis = field(default_factory=best_program_vis)
 
-    def update_all(self,state: GraphState):
+    def update_all(self,state: GraphState, init:bool = False):
         '''
         初始化可视化数据 在init或者checkpoint的GraphState会传入到这里 更新后会新建一个副本传给socket_server
         '''
@@ -118,6 +119,7 @@ class visualize_data:
         
         # 初始化best_program信息
         best_program = state.best_program
+        logger.debug(f" best_program.id={best_program.id}, best_program.code exists={best_program.code is not None}, code length={len(best_program.code) if best_program.code else 0}, code content='{best_program.code[:50] if best_program.code else 'None'}...'")
         new_best_program_data = best_program_vis(
             id = best_program.id,
             from_island = best_program.island_id,
@@ -129,11 +131,19 @@ class visualize_data:
             sample_program_id = best_program.parent_id if best_program.parent_id else "",
         )
         self.best_program = new_best_program_data
-        
+        logger.debug(f" Created best_program_vis with code length: {len(new_best_program_data.code) if new_best_program_data.code else 0}, code meaningful={bool(new_best_program_data.code and new_best_program_data.code.strip())}")
 
         new_overall_information_data = overall_information_vis(
-            num_programs = state.num_islands,
+            num_programs = sum([len(island_state.programs.get_all_programs()) for island_state in state.islands.values()]),
             num_meetings = state.generation_count_in_meeting,
+        )
+        
+        init_program = state.all_programs.get_program(state.init_program)
+        self.init_program = best_program_vis(
+            id = init_program.id,
+            code = init_program.code,
+            metrics=init_program.metrics,
+            
         )
         self.overall_information = new_overall_information_data
         
@@ -165,14 +175,14 @@ class visualize_data:
         """根据节点信息更新可视化数据"""
         # 检查消息格式
         if "island_id" not in node_info or "update_dict" not in node_info:
-            print(f"Warning: Invalid message format: {node_info}")
+            logger.warning(f"Warning: Invalid message format: {node_info}")
             return
             
         island_id = node_info["island_id"]
         update_dict = node_info["update_dict"]
         
         if island_id not in self.islands_data:
-            print(f"Warning: Island {island_id} not found in visualization data")
+            logger.warning(f"Warning: Island {island_id} not found in visualization data")
             return
         
         island_state = self.islands_state[island_id]
@@ -185,16 +195,17 @@ class visualize_data:
                          "iteration",
                          "next_meeting",
                          "now_meeting",
-                         "next_meeting",
                          "prompt",
                          "sample_program",
                          "best_program",
                          "latest_program"]:
+                # logger.debug(key,value)
+                
                 setattr(island_state, key, value)
 
         try:
-            # print(type(island_state.programs))
-            # print(island_state.now_meeting)
+            # logger.debug(type(island_state.programs))
+            # logger.debug(island_state.now_meeting)
             new_island_data = IslandData_vis(
                 id = island_state.id,
                 status = self._extract_status_value(island_state.status),
@@ -208,8 +219,10 @@ class visualize_data:
                 best_program_id = island_state.best_program.id,
                 best_program_metrics = island_state.best_program.metrics,
             )
+            
+                    
         except Exception as e:
-            print(f"Error updating island data: {e}")
+            logger.error(f"Error updating island data: {e}")
             return
         
         
