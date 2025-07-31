@@ -1,0 +1,1323 @@
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | node_init_status __call__ method invoked
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Starting node_init_status execution | node_type=node_init_status
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Configuration validation passed successfully
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Loading initial program | file_path=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Initial program loaded successfully | file_path=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py | code_length=3873
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Code language detected | language=python
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Starting initial program evaluation | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Starting program evaluation | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py | code_length=3873
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Executing evaluation | evaluation_type=cascade
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Starting cascade evaluation | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py | timeout=15
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Setting up cascade evaluation environment | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Loading evaluation module for cascade | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking for cascade evaluation functions | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Starting stage 1 evaluation | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | timeout=15
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Running stage 1 evaluation function | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py
+2025-07-29 17:26:29 [INFO] evaluator:26 - [INFO] 2025-07-29 17:26:29 | Evaluator | Stage 1 evaluation completed successfully | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | result_keys=['validity', 'sum_radii', 'target_ratio', 'combined_score']
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking stage 1 threshold | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | threshold=0.5
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking threshold | threshold=0.5 | metrics_count=4
+2025-07-29 17:26:29 [INFO] evaluator:26 - [INFO] 2025-07-29 17:26:29 | Evaluator | Threshold check completed | average_score=0.6720595014969086 | threshold=0.5 | threshold_passed=True | valid_metrics=[1.0, 0.9597642169962064, 0.36423689449571406, 0.36423689449571406]
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking for stage 2 evaluation function | evaluation_file=/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Starting stage 2 evaluation | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | timeout=15
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Running stage 2 evaluation function | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py
+2025-07-29 17:26:29 [INFO] evaluator:26 - [INFO] 2025-07-29 17:26:29 | Evaluator | Stage 2 evaluation completed successfully | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | result_keys=['sum_radii', 'target_ratio', 'validity', 'eval_time', 'combined_score']
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Merging stage 1 and 2 results | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking stage 2 threshold for stage 3 | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | threshold=0.75
+2025-07-29 17:26:29 [INFO] evaluator:62 - [STEP] 2025-07-29 17:26:29 | Evaluator | Checking threshold | threshold=0.75 | metrics_count=5
+2025-07-29 17:26:29 [INFO] evaluator:26 - [INFO] 2025-07-29 17:26:29 | Evaluator | Threshold check completed | average_score=0.5565376005871754 | threshold=0.75 | threshold_passed=False | valid_metrics=[1.0, 0.9597642169962064, 0.36423689449571406, 0.36423689449571406, 0.09444999694824219]
+2025-07-29 17:26:29 [INFO] evaluator:26 - [INFO] 2025-07-29 17:26:29 | Evaluator | Stage 2 threshold not passed, stopping cascade evaluation | program_path=/var/folders/f5/30v_55_54ps7t5l3p_g0jz600000gn/T/tmp7dcea8cx.py | threshold=0.75
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Evaluation execution completed | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | result_type=<class 'evaluator.EvaluationResult'>
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Evaluation result processed | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | metrics_count=5
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Program evaluation completed successfully | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | elapsed_time=0.27s | final_metrics_count=5
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Initial program evaluation completed successfully | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | metrics={'validity': 1.0, 'sum_radii': 0.9597642169962064, 'target_ratio': 0.36423689449571406, 'combined_score': 0.36423689449571406, 'eval_time': 0.09444999694824219} | has_artifacts=False
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Creating initial Program object | program_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | Initial Program object created successfully | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | language=python | generation=0
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | Initializing island data structures | num_islands=4
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | All islands initialized successfully | total_islands=4
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:29 | GraphNode | node_init_status execution completed successfully | program_id=486dbef3-38e8-42aa-820d-41318bd0289b | num_islands=4 | language=python
+2025-07-29 17:26:29 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:29 | GraphNode | node_init_status __call__ method completed successfully
+2025-07-29 17:26:29 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:29 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:29 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:29 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | LLM generation configured for diff-based evolution
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | LLM generation configured for diff-based evolution
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | LLM generation configured for diff-based evolution
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | LLM generation configured for diff-based evolution
+2025-07-29 17:26:30 [INFO] root:254 - -------------------------------迭代次数: 0/100--------------------------------
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method invoked | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method invoked | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method invoked | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method invoked | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent and inspiration sampling | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent and inspiration sampling | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent and inspiration sampling | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent and inspiration sampling | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent sampling strategy selection | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent sampling strategy selection | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent sampling strategy selection | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting parent sampling strategy selection | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Using exploitation sampling strategy | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Using exploration sampling strategy | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Using exploitation sampling strategy | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Using exploitation sampling strategy | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting exploitation parent sampling | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting exploration parent sampling | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting exploitation parent sampling | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting exploitation parent sampling | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Selected exploitation parent from current island archive | island_id=0 | selected_parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Exploration parent selected | island_id=1 | selected_parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Selected exploitation parent from current island archive | island_id=2 | selected_parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Selected exploitation parent from current island archive | island_id=3 | selected_parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Parent program sampled successfully | island_id=0 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Parent program sampled successfully | island_id=1 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Parent program sampled successfully | island_id=2 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Parent program sampled successfully | island_id=3 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting inspiration sampling | island_id=0 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b | target_count=5
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting inspiration sampling | island_id=1 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b | target_count=5
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting inspiration sampling | island_id=2 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b | target_count=5
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting inspiration sampling | island_id=3 | parent_id=486dbef3-38e8-42aa-820d-41318bd0289b | target_count=5
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration sampling completed | island_id=0 | final_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration sampling completed | island_id=1 | final_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration sampling completed | island_id=2 | final_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration sampling completed | island_id=3 | final_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration programs sampled successfully | island_id=0 | inspiration_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration programs sampled successfully | island_id=1 | inspiration_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration programs sampled successfully | island_id=2 | inspiration_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Inspiration programs sampled successfully | island_id=3 | inspiration_count=0 | inspiration_ids=[]
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method completed successfully | island_id=0 | parent_sampled=True | inspiration_count=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method completed successfully | island_id=1 | parent_sampled=True | inspiration_count=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method completed successfully | island_id=2 | parent_sampled=True | inspiration_count=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_sample_parent_inspiration __call__ method completed successfully | island_id=3 | parent_sampled=True | inspiration_count=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method invoked | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt building | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt construction | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building previous programs history | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Processing inspiration programs | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Retrieving top programs | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building final prompt | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt construction completed | island_id=0 | prompt_length=8223 | evolution_round=0 | diff_based_evolution=ture | prompt=You are an expert mathematician specializing in circle packing problems and computational geometry. Your task is to improve a constructor function that directly produces a specific arrangement of 26 circles in a unit square, maximizing the sum of their radii. The AlphaEvolve paper achieved a sum of 2.635 for n=26.
+
+Key geometric insights:
+- Circle packings often follow hexagonal patterns in the densest regions
+- Maximum density for infinite circle packing is pi/(2*sqrt(3)) ≈ 0.9069
+- Edge effects make square container packing harder than infinite packing
+- Circles can be placed in layers or shells when confined to a square
+- Similar radius circles often form regular patterns, while varied radii allow better space utilization
+- Perfect symmetry may not yield the optimal packing due to edge effects
+
+Focus on designing an explicit constructor that places each circle in a specific position, rather than an iterative search algorithm.
+System: # Current Program Information
+- Current performance metrics: - validity: 1.0000
+- sum_radii: 0.9598
+- target_ratio: 0.3642
+- combined_score: 0.3642
+- eval_time: 0.0944
+- Areas identified for improvement: - 考虑简化代码以提高可读性和可维护性
+
+
+
+# Program Evolution History
+System: ## Previous Attempts
+
+
+
+## Top Performing Programs
+
+System: ### Program 1 (Score: 0.5565)
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+# ... (truncated for brevity)
+```
+Key features: Performs well on validity (1.0000), Performs well on sum_radii (0.9598), Performs well on target_ratio (0.3642), Performs well on combined_score (0.3642), Performs well on eval_time (0.0944)
+
+
+
+
+# Current Program
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+    """
+    n = centers.shape[0]
+    radii = np.ones(n)
+
+    # First, limit by distance to square borders
+    for i in range(n):
+        x, y = centers[i]
+        # Distance to borders
+        radii[i] = min(x, y, 1 - x, 1 - y)
+
+    # Then, limit by distance to other circles
+    # Each pair of circles with centers at distance d can have
+    # sum of radii at most d to avoid overlap
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
+
+            # If current radii would cause overlap
+            if radii[i] + radii[j] > dist:
+                # Scale both radii proportionally
+                scale = dist / (radii[i] + radii[j])
+                radii[i] *= scale
+                radii[j] *= scale
+
+    return radii
+
+
+# EVOLVE-BLOCK-END
+
+
+# This part remains fixed (not evolved)
+def run_packing():
+    """Run the circle packing constructor for n=26"""
+    centers, radii, sum_radii = construct_packing()
+    return centers, radii, sum_radii
+
+
+def visualize(centers, radii):
+    """
+    Visualize the circle packing
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+        radii: np.array of shape (n) with radius of each circle
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Draw unit square
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.grid(True)
+
+    # Draw circles
+    for i, (center, radius) in enumerate(zip(centers, radii)):
+        circle = Circle(center, radius, alpha=0.5)
+        ax.add_patch(circle)
+        ax.text(center[0], center[1], str(i), ha="center", va="center")
+
+    plt.title(f"Circle Packing (n={len(centers)}, sum={sum(radii):.6f})")
+    plt.show()
+
+
+if __name__ == "__main__":
+    centers, radii, sum_radii = run_packing()
+    print(f"Sum of radii: {sum_radii}")
+    # AlphaEvolve improved this to 2.635
+
+    # Uncomment to visualize:
+    visualize(centers, radii)
+
+```
+
+# Task
+Suggest improvements to the program that will lead to better performance on the specified metrics.
+
+You MUST use the exact SEARCH/REPLACE diff format shown below to indicate changes:
+
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly)
+=======
+# New replacement code
+>>>>>>> REPLACE
+
+Example of valid diff format:
+<<<<<<< SEARCH
+for i in range(m):
+    for j in range(p):
+        for k in range(n):
+            C[i, j] += A[i, k] * B[k, j]
+=======
+# Reorder loops for better memory access pattern
+for i in range(m):
+    for k in range(n):
+        for j in range(p):
+            C[i, j] += A[i, k] * B[k, j]
+>>>>>>> REPLACE
+
+You can suggest multiple changes. Each SEARCH section must exactly match code in the current program.
+Be thoughtful about your changes and explain your reasoning thoroughly.
+
+IMPORTANT: Do not rewrite the entire program - focus on targeted improvements.
+
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt building completed | island_id=0 | prompt_length=8223
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method completed successfully | island_id=0 | prompt_created=True
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method invoked | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt building | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method invoked | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt construction | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_llm_generate __call__ method invoked | island_id=0
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt building | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building previous programs history | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method invoked | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting LLM program generation | island_id=0 | evolution_type=diff-based
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt construction | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Processing inspiration programs | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt building | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building previous programs history | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Retrieving top programs | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting prompt construction | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Processing inspiration programs | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building final prompt | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building previous programs history | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Retrieving top programs | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt construction completed | island_id=2 | prompt_length=8223 | evolution_round=0 | diff_based_evolution=ture | prompt=You are an expert mathematician specializing in circle packing problems and computational geometry. Your task is to improve a constructor function that directly produces a specific arrangement of 26 circles in a unit square, maximizing the sum of their radii. The AlphaEvolve paper achieved a sum of 2.635 for n=26.
+
+Key geometric insights:
+- Circle packings often follow hexagonal patterns in the densest regions
+- Maximum density for infinite circle packing is pi/(2*sqrt(3)) ≈ 0.9069
+- Edge effects make square container packing harder than infinite packing
+- Circles can be placed in layers or shells when confined to a square
+- Similar radius circles often form regular patterns, while varied radii allow better space utilization
+- Perfect symmetry may not yield the optimal packing due to edge effects
+
+Focus on designing an explicit constructor that places each circle in a specific position, rather than an iterative search algorithm.
+System: # Current Program Information
+- Current performance metrics: - validity: 1.0000
+- sum_radii: 0.9598
+- target_ratio: 0.3642
+- combined_score: 0.3642
+- eval_time: 0.0944
+- Areas identified for improvement: - 考虑简化代码以提高可读性和可维护性
+
+
+
+# Program Evolution History
+System: ## Previous Attempts
+
+
+
+## Top Performing Programs
+
+System: ### Program 1 (Score: 0.5565)
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+# ... (truncated for brevity)
+```
+Key features: Performs well on validity (1.0000), Performs well on sum_radii (0.9598), Performs well on target_ratio (0.3642), Performs well on combined_score (0.3642), Performs well on eval_time (0.0944)
+
+
+
+
+# Current Program
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+    """
+    n = centers.shape[0]
+    radii = np.ones(n)
+
+    # First, limit by distance to square borders
+    for i in range(n):
+        x, y = centers[i]
+        # Distance to borders
+        radii[i] = min(x, y, 1 - x, 1 - y)
+
+    # Then, limit by distance to other circles
+    # Each pair of circles with centers at distance d can have
+    # sum of radii at most d to avoid overlap
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
+
+            # If current radii would cause overlap
+            if radii[i] + radii[j] > dist:
+                # Scale both radii proportionally
+                scale = dist / (radii[i] + radii[j])
+                radii[i] *= scale
+                radii[j] *= scale
+
+    return radii
+
+
+# EVOLVE-BLOCK-END
+
+
+# This part remains fixed (not evolved)
+def run_packing():
+    """Run the circle packing constructor for n=26"""
+    centers, radii, sum_radii = construct_packing()
+    return centers, radii, sum_radii
+
+
+def visualize(centers, radii):
+    """
+    Visualize the circle packing
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+        radii: np.array of shape (n) with radius of each circle
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Draw unit square
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.grid(True)
+
+    # Draw circles
+    for i, (center, radius) in enumerate(zip(centers, radii)):
+        circle = Circle(center, radius, alpha=0.5)
+        ax.add_patch(circle)
+        ax.text(center[0], center[1], str(i), ha="center", va="center")
+
+    plt.title(f"Circle Packing (n={len(centers)}, sum={sum(radii):.6f})")
+    plt.show()
+
+
+if __name__ == "__main__":
+    centers, radii, sum_radii = run_packing()
+    print(f"Sum of radii: {sum_radii}")
+    # AlphaEvolve improved this to 2.635
+
+    # Uncomment to visualize:
+    visualize(centers, radii)
+
+```
+
+# Task
+Suggest improvements to the program that will lead to better performance on the specified metrics.
+
+You MUST use the exact SEARCH/REPLACE diff format shown below to indicate changes:
+
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly)
+=======
+# New replacement code
+>>>>>>> REPLACE
+
+Example of valid diff format:
+<<<<<<< SEARCH
+for i in range(m):
+    for j in range(p):
+        for k in range(n):
+            C[i, j] += A[i, k] * B[k, j]
+=======
+# Reorder loops for better memory access pattern
+for i in range(m):
+    for k in range(n):
+        for j in range(p):
+            C[i, j] += A[i, k] * B[k, j]
+>>>>>>> REPLACE
+
+You can suggest multiple changes. Each SEARCH section must exactly match code in the current program.
+Be thoughtful about your changes and explain your reasoning thoroughly.
+
+IMPORTANT: Do not rewrite the entire program - focus on targeted improvements.
+
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Processing inspiration programs | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building final prompt | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt building completed | island_id=2 | prompt_length=8223
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Retrieving top programs | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt construction completed | island_id=3 | prompt_length=8223 | evolution_round=0 | diff_based_evolution=ture | prompt=You are an expert mathematician specializing in circle packing problems and computational geometry. Your task is to improve a constructor function that directly produces a specific arrangement of 26 circles in a unit square, maximizing the sum of their radii. The AlphaEvolve paper achieved a sum of 2.635 for n=26.
+
+Key geometric insights:
+- Circle packings often follow hexagonal patterns in the densest regions
+- Maximum density for infinite circle packing is pi/(2*sqrt(3)) ≈ 0.9069
+- Edge effects make square container packing harder than infinite packing
+- Circles can be placed in layers or shells when confined to a square
+- Similar radius circles often form regular patterns, while varied radii allow better space utilization
+- Perfect symmetry may not yield the optimal packing due to edge effects
+
+Focus on designing an explicit constructor that places each circle in a specific position, rather than an iterative search algorithm.
+System: # Current Program Information
+- Current performance metrics: - validity: 1.0000
+- sum_radii: 0.9598
+- target_ratio: 0.3642
+- combined_score: 0.3642
+- eval_time: 0.0944
+- Areas identified for improvement: - 考虑简化代码以提高可读性和可维护性
+
+
+
+# Program Evolution History
+System: ## Previous Attempts
+
+
+
+## Top Performing Programs
+
+System: ### Program 1 (Score: 0.5565)
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+# ... (truncated for brevity)
+```
+Key features: Performs well on validity (1.0000), Performs well on sum_radii (0.9598), Performs well on target_ratio (0.3642), Performs well on combined_score (0.3642), Performs well on eval_time (0.0944)
+
+
+
+
+# Current Program
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+    """
+    n = centers.shape[0]
+    radii = np.ones(n)
+
+    # First, limit by distance to square borders
+    for i in range(n):
+        x, y = centers[i]
+        # Distance to borders
+        radii[i] = min(x, y, 1 - x, 1 - y)
+
+    # Then, limit by distance to other circles
+    # Each pair of circles with centers at distance d can have
+    # sum of radii at most d to avoid overlap
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
+
+            # If current radii would cause overlap
+            if radii[i] + radii[j] > dist:
+                # Scale both radii proportionally
+                scale = dist / (radii[i] + radii[j])
+                radii[i] *= scale
+                radii[j] *= scale
+
+    return radii
+
+
+# EVOLVE-BLOCK-END
+
+
+# This part remains fixed (not evolved)
+def run_packing():
+    """Run the circle packing constructor for n=26"""
+    centers, radii, sum_radii = construct_packing()
+    return centers, radii, sum_radii
+
+
+def visualize(centers, radii):
+    """
+    Visualize the circle packing
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+        radii: np.array of shape (n) with radius of each circle
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Draw unit square
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.grid(True)
+
+    # Draw circles
+    for i, (center, radius) in enumerate(zip(centers, radii)):
+        circle = Circle(center, radius, alpha=0.5)
+        ax.add_patch(circle)
+        ax.text(center[0], center[1], str(i), ha="center", va="center")
+
+    plt.title(f"Circle Packing (n={len(centers)}, sum={sum(radii):.6f})")
+    plt.show()
+
+
+if __name__ == "__main__":
+    centers, radii, sum_radii = run_packing()
+    print(f"Sum of radii: {sum_radii}")
+    # AlphaEvolve improved this to 2.635
+
+    # Uncomment to visualize:
+    visualize(centers, radii)
+
+```
+
+# Task
+Suggest improvements to the program that will lead to better performance on the specified metrics.
+
+You MUST use the exact SEARCH/REPLACE diff format shown below to indicate changes:
+
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly)
+=======
+# New replacement code
+>>>>>>> REPLACE
+
+Example of valid diff format:
+<<<<<<< SEARCH
+for i in range(m):
+    for j in range(p):
+        for k in range(n):
+            C[i, j] += A[i, k] * B[k, j]
+=======
+# Reorder loops for better memory access pattern
+for i in range(m):
+    for k in range(n):
+        for j in range(p):
+            C[i, j] += A[i, k] * B[k, j]
+>>>>>>> REPLACE
+
+You can suggest multiple changes. Each SEARCH section must exactly match code in the current program.
+Be thoughtful about your changes and explain your reasoning thoroughly.
+
+IMPORTANT: Do not rewrite the entire program - focus on targeted improvements.
+
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method completed successfully | island_id=2 | prompt_created=True
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Building final prompt | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt building completed | island_id=3 | prompt_length=8223
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method completed successfully | island_id=3 | prompt_created=True
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt construction completed | island_id=1 | prompt_length=8223 | evolution_round=0 | diff_based_evolution=ture | prompt=You are an expert mathematician specializing in circle packing problems and computational geometry. Your task is to improve a constructor function that directly produces a specific arrangement of 26 circles in a unit square, maximizing the sum of their radii. The AlphaEvolve paper achieved a sum of 2.635 for n=26.
+
+Key geometric insights:
+- Circle packings often follow hexagonal patterns in the densest regions
+- Maximum density for infinite circle packing is pi/(2*sqrt(3)) ≈ 0.9069
+- Edge effects make square container packing harder than infinite packing
+- Circles can be placed in layers or shells when confined to a square
+- Similar radius circles often form regular patterns, while varied radii allow better space utilization
+- Perfect symmetry may not yield the optimal packing due to edge effects
+
+Focus on designing an explicit constructor that places each circle in a specific position, rather than an iterative search algorithm.
+System: # Current Program Information
+- Current performance metrics: - validity: 1.0000
+- sum_radii: 0.9598
+- target_ratio: 0.3642
+- combined_score: 0.3642
+- eval_time: 0.0944
+- Areas identified for improvement: - 考虑简化代码以提高可读性和可维护性
+
+
+
+# Program Evolution History
+System: ## Previous Attempts
+
+
+
+## Top Performing Programs
+
+System: ### Program 1 (Score: 0.5565)
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+# ... (truncated for brevity)
+```
+Key features: Performs well on validity (1.0000), Performs well on sum_radii (0.9598), Performs well on target_ratio (0.3642), Performs well on combined_score (0.3642), Performs well on eval_time (0.0944)
+
+
+
+
+# Current Program
+```python
+# EVOLVE-BLOCK-START
+"""Constructor-based circle packing for n=26 circles"""
+import numpy as np
+
+
+def construct_packing():
+    """
+    Construct a specific arrangement of 26 circles in a unit square
+    that attempts to maximize the sum of their radii.
+
+    Returns:
+        Tuple of (centers, radii, sum_of_radii)
+        centers: np.array of shape (26, 2) with (x, y) coordinates
+        radii: np.array of shape (26) with radius of each circle
+        sum_of_radii: Sum of all radii
+    """
+    # Initialize arrays for 26 circles
+    n = 26
+    centers = np.zeros((n, 2))
+
+    # Place circles in a structured pattern
+    # This is a simple pattern - evolution will improve this
+
+    # First, place a large circle in the center
+    centers[0] = [0.5, 0.5]
+
+    # Place 8 circles around it in a ring
+    for i in range(8):
+        angle = 2 * np.pi * i / 8
+        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+
+    # Place 16 more circles in an outer ring
+    for i in range(16):
+        angle = 2 * np.pi * i / 16
+        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+
+    # Additional positioning adjustment to make sure all circles
+    # are inside the square and don't overlap
+    # Clip to ensure everything is inside the unit square
+    centers = np.clip(centers, 0.01, 0.99)
+
+    # Compute maximum valid radii for this configuration
+    radii = compute_max_radii(centers)
+
+    # Calculate the sum of radii
+    sum_radii = np.sum(radii)
+
+    return centers, radii, sum_radii
+
+
+def compute_max_radii(centers):
+    """
+    Compute the maximum possible radii for each circle position
+    such that they don't overlap and stay within the unit square.
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+
+    Returns:
+        np.array of shape (n) with radius of each circle
+    """
+    n = centers.shape[0]
+    radii = np.ones(n)
+
+    # First, limit by distance to square borders
+    for i in range(n):
+        x, y = centers[i]
+        # Distance to borders
+        radii[i] = min(x, y, 1 - x, 1 - y)
+
+    # Then, limit by distance to other circles
+    # Each pair of circles with centers at distance d can have
+    # sum of radii at most d to avoid overlap
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
+
+            # If current radii would cause overlap
+            if radii[i] + radii[j] > dist:
+                # Scale both radii proportionally
+                scale = dist / (radii[i] + radii[j])
+                radii[i] *= scale
+                radii[j] *= scale
+
+    return radii
+
+
+# EVOLVE-BLOCK-END
+
+
+# This part remains fixed (not evolved)
+def run_packing():
+    """Run the circle packing constructor for n=26"""
+    centers, radii, sum_radii = construct_packing()
+    return centers, radii, sum_radii
+
+
+def visualize(centers, radii):
+    """
+    Visualize the circle packing
+
+    Args:
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+        radii: np.array of shape (n) with radius of each circle
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Draw unit square
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.grid(True)
+
+    # Draw circles
+    for i, (center, radius) in enumerate(zip(centers, radii)):
+        circle = Circle(center, radius, alpha=0.5)
+        ax.add_patch(circle)
+        ax.text(center[0], center[1], str(i), ha="center", va="center")
+
+    plt.title(f"Circle Packing (n={len(centers)}, sum={sum(radii):.6f})")
+    plt.show()
+
+
+if __name__ == "__main__":
+    centers, radii, sum_radii = run_packing()
+    print(f"Sum of radii: {sum_radii}")
+    # AlphaEvolve improved this to 2.635
+
+    # Uncomment to visualize:
+    visualize(centers, radii)
+
+```
+
+# Task
+Suggest improvements to the program that will lead to better performance on the specified metrics.
+
+You MUST use the exact SEARCH/REPLACE diff format shown below to indicate changes:
+
+<<<<<<< SEARCH
+# Original code to find and replace (must match exactly)
+=======
+# New replacement code
+>>>>>>> REPLACE
+
+Example of valid diff format:
+<<<<<<< SEARCH
+for i in range(m):
+    for j in range(p):
+        for k in range(n):
+            C[i, j] += A[i, k] * B[k, j]
+=======
+# Reorder loops for better memory access pattern
+for i in range(m):
+    for k in range(n):
+        for j in range(p):
+            C[i, j] += A[i, k] * B[k, j]
+>>>>>>> REPLACE
+
+You can suggest multiple changes. Each SEARCH section must exactly match code in the current program.
+Be thoughtful about your changes and explain your reasoning thoroughly.
+
+IMPORTANT: Do not rewrite the entire program - focus on targeted improvements.
+
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | Prompt building completed | island_id=1 | prompt_length=8223
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:75 - [INFO] 2025-07-29 17:26:30 | GraphNode | node_build_prompt __call__ method completed successfully | island_id=1 | prompt_created=True
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_llm_generate __call__ method invoked | island_id=2
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting LLM program generation | island_id=2 | evolution_type=diff-based
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_llm_generate __call__ method invoked | island_id=1
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting LLM program generation | island_id=1 | evolution_type=diff-based
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | node_llm_generate __call__ method invoked | island_id=3
+2025-07-29 17:26:30 [INFO] openevolve_graph.Graph.Graph_Node:115 - [STEP] 2025-07-29 17:26:30 | GraphNode | Starting LLM program generation | island_id=3 | evolution_type=diff-based
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:30 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:31 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:32 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:33 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:34 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:35 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:36 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:37 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:256 - visualization update best program code, code length: 3873
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:275 - visualization update init program code, code length: 3873
+2025-07-29 17:26:38 [INFO] openevolve_graph.visualization.vis:120 - make_syntax called with code length: 3873, language: python

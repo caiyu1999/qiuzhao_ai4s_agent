@@ -24,26 +24,31 @@ def construct_packing():
     # First, place a large circle in the center
     centers[0] = [0.5, 0.5]
 
-    # Place 8 circles around it in a tighter ring
+    # Place 8 circles around it in a ring
+    # Use a smaller radius for the inner circle arrangement to allow better packing
+    radius_inner = 0.25  # Increase inner circle radius for better packing density
     for i in range(8):
         angle = 2 * np.pi * i / 8
-        centers[i + 1] = [0.5 + 0.25 * np.cos(angle), 0.5 + 0.25 * np.sin(angle)]
+        centers[i + 1] = [0.5 + radius_inner * np.cos(angle), 0.5 + radius_inner * np.sin(angle)]
 
-    # Place 16 more circles in an outer ring, adjusting radius for better packing
+    # Place 16 more circles in an outer ring
+    # Use a larger radius for the outer circle arrangement for better packing
+    radius_outer = 0.55  # Optimize outer circle radius to balance packing density and prevent overlap
     for i in range(16):
         angle = 2 * np.pi * i / 16
-        centers[i + 9] = [0.5 + 0.5 * np.cos(angle), 0.5 + 0.5 * np.sin(angle)]
+        centers[i + 9] = [0.5 + radius_outer * np.cos(angle), 0.5 + radius_outer * np.sin(angle)]
 
     # Additional positioning adjustment to make sure all circles
     # are inside the square and don't overlap
-    # Adjust circle positions to ensure they remain within bounds and reduce clipping
-    centers = np.clip(centers, 0.05, 0.95)
+    # Clip to ensure everything is inside the unit square
+    # Adjust the clipping margins to ensure no circles are cut off by the boundaries
+    centers = np.clip(centers, 0.1, 0.9)  # Adjust margins to allow for larger circles
 
     # Compute maximum valid radii for this configuration
     radii = compute_max_radii(centers)
 
-    # Calculate the sum of radii
-    sum_radii = np.sum(radii)
+    # Calculate the sum of radii and adjust for any overlaps
+    sum_radii = np.sum(np.maximum(radii, 0))  # Ensure no negative radii
 
     return centers, radii, sum_radii
 
@@ -60,7 +65,7 @@ def compute_max_radii(centers):
         np.array of shape (n) with radius of each circle
     """
     n = centers.shape[0]
-    radii = np.zeros(n)
+    radii = np.zeros(n)  # Initialize radii to zero for better accuracy
 
     # First, limit by distance to square borders
     for i in range(n):
@@ -77,9 +82,8 @@ def compute_max_radii(centers):
 
             # If current radii would cause overlap
             if radii[i] + radii[j] > dist:
-                # Scale both radii proportionally using a different strategy
-                avg_radius = (radii[i] + radii[j]) / 2
-                scale = dist / (2 * avg_radius)
+                # Scale both radii proportionally
+                scale = dist / (radii[i] + radii[j])
                 radii[i] *= scale
                 radii[j] *= scale
 
