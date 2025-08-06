@@ -30,7 +30,7 @@ if not os.path.exists(logger_dir):
 # 获取根记录器 (Root Logger)
 root_logger = logging.getLogger()
 root_logger.handlers.clear()  # 清空已有的handler
-root_logger.setLevel(logging.INFO) # 设置根记录器的级别
+root_logger.setLevel(logging.DEBUG) # 设置根记录器的级别为DEBUG以显示调试信息
 
 # 创建文件处理器，并设置更详细的格式
 file_handler = logging.FileHandler(

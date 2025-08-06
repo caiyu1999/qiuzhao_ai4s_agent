@@ -2,7 +2,7 @@
 这个文件实现一个llm_config类 与llm相关的配置
 '''
 from typing import Optional,List,Dict,Any
-from dataclasses import dataclass,field
+from dataclasses import dataclass,field,asdict
 
 
 @dataclass
@@ -27,23 +27,25 @@ class ModelConfig:
     
     
     def to_dict(self)->Dict[str,Any]: 
-        return {
-            "name": self.name,
-            "model_provider": self.model_provider,
-            "base_url": self.base_url,
-            "system_message": self.system_message,
-            "temperature": self.temperature,
-            "top_p": self.top_p,
-            "max_tokens": self.max_tokens,
-            "timeout": self.timeout,
-            "weight": self.weight,
-            "use_web": self.use_web,
-            "tavily_api_key": self.tavily_api_key,
-            "language": self.language,
-        }
+        # 使用asdict自动转换所有字段
+        return asdict(self)
         
         
-    
+@dataclass 
+class LLMConfig_single:
+    model:str = "gpt-4o-mini"
+    api_key:str = "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
+    base_url:str = "https://api.chatanywhere.tech/v1"
+    temperature:float = 0.7
+    top_p:float = 0.95
+    max_tokens:int = 8192
+    timeout:int = 60
+    def to_dict(self)->Dict[str,Any]:
+        return asdict(self)
+    @classmethod
+    def from_dict(cls, llm_dict:Dict[str,Any]) -> "LLMConfig_single":
+        """Create LLMConfig_single from a dictionary"""
+        return cls(**llm_dict)
     
 
 @dataclass
@@ -115,4 +117,22 @@ class LLMConfig(ModelConfig):
     
     def to_dict(self) -> Dict[str,Any]:
         """Convert LLMConfig to a dictionary"""
-        pass 
+        return asdict(self)
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+# if __name__ == "__main__":
+#     from langchain_openai import OpenAIEmbeddings 
+#     embeddings_config = EmbeddingsConfig()
+#     embeddings = OpenAIEmbeddings(
+#         **embeddings_config.to_dict()
+#     )
+    
+    

@@ -38,7 +38,36 @@ class LLMs:
     
     def sample_model(self):
         return random.choices(self.models, weights=self.weights, k=1)[0]
-
+    async def call_api_async(self, model, prompt):
+        for i in range(self.retries):
+            try:
+                # 添加超时控制
+                # logger.info(f"尝试获得response")
+                # result = await asyncio.wait_for(
+                #     model.ainvoke(prompt), 
+                #     timeout=self.timeout
+                # )
+                result = await model.ainvoke(prompt)
+                # 若成功生成 则返回结果
+                # logger.info(f"LLMs.call_api 成功生成结果: {result}")
+                return result
+            
+            except asyncio.TimeoutError:
+                # 若超时 则重试
+                logger.error(f"Timeout after {self.timeout} seconds on attempt {i+1}")
+                if i < self.retries - 1:  # 不是最后一次尝试
+                    time.sleep(self.retry_delay)
+                    continue 
+                else:
+                    raise TimeoutError(f"Model invocation timed out after {self.retries} attempts")
+            except Exception as e:
+                # 若失败 则重试
+                logger.error(f"Error invoking model on attempt {i+1}: {e}")
+                if i < self.retries - 1:  # 不是最后一次尝试
+                    time.sleep(self.retry_delay)
+                    continue 
+                else:
+                    raise
     def call_api(self, model, prompt):
         """带超时和重试机制的API调用"""
         for i in range(self.retries):
@@ -109,7 +138,44 @@ class LLMs:
             except Exception as e:
                 #logger.error(f"Error invoking model: {e}")
                 return None
-
+    async def ainvoke(self, prompt: str, 
+                     structure: Optional[Type[BaseModel] | None], 
+                     key: Optional[Union[str, List[str]] | None]
+                     ) -> Union[str, BaseModel, None, Dict[str, Any]]:
+        model = self.sample_model()
+        #logger.info(f"LLMs.invoke 使用的模型: {model}")
+        if structure is not None:
+            model = model.with_structured_output(structure)
+            if key is not None:
+                try:
+                    # logger.info(f"LLMs.invoke 开始调用模型: {model}")
+                    result = await self.call_api_async(model, prompt)
+                    if result is not None and isinstance(key, list):
+                        return {k: getattr(result, k) for k in key}
+                    elif result is not None and isinstance(key, str):
+                        return getattr(result, key)
+                    return None
+                except Exception as e:
+                    #logger.error(f"Error invoking model: {e}")
+                    return None
+            else:
+                try:
+                    # logger.info(f"LLMs.invoke 开始调用模型: {model}")
+                    result = await self.call_api_async(model, prompt)
+                    return result
+                except Exception as e:
+                    #logger.error(f"Error invoking model: {e}")
+                    return None
+        else:
+            try:
+                result = await self.call_api_async(model, prompt)
+                # logger.info(f"LLMs.invoke 成功生成结果: {result}")
+                if result is not None and hasattr(result, 'content'):
+                    return result.content
+                return str(result) if result is not None else None
+            except Exception as e:
+                #logger.error(f"Error invoking model: {e}")
+                return None
 
 class LLMs_evalutor():
     def __init__(self, config: Config):

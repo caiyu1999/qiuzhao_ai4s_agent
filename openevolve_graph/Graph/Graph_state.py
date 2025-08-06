@@ -19,7 +19,7 @@ from openevolve_graph.utils.thread_safe_programs import Programs_container
 import json 
 import logging
 logger = logging.getLogger(__name__)
-
+from openevolve_graph.Graph.RAG_document import document
 
 def reducer_for_feature_map(left:Dict[str,Any],
                             right:Optional[Tuple[str,str]]|Dict[str,Any]|Tuple[str,str,str])->Dict[str,Any]|None:
@@ -195,6 +195,17 @@ class IslandState(BaseModel):
     archive:Annotated[Programs_container,reducer_for_safe_container_all_programs] = Field(default_factory=Programs_container)
     # 全部程序中的最好程序
     all_best_program:Program = Field(default_factory=Program)
+    
+   
+    
+    
+    
+    
+    
+    
+    
+    
+    
  
     def to_dict(self)->Dict[str,Any]:
         return self.model_dump()
@@ -234,7 +245,8 @@ class GraphState(BaseModel):
     iteration:int = Field(default=0)
     # 全局共享状态 
     # 对于const参数 就算是合并节点 也不会更新  
-    init_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 初始程序的id 全局只有一个 这个值不会被更新 const
+    init_program:Annotated[Program,reducer_for_single_parameter] = Field(default_factory=Program) # 初始程序的id 全局只有一个 这个值不会被更新 const
+    
     
     evaluation_program:Annotated[str,reducer_for_single_parameter] = Field(default="") # 评估程序的code 全局只有一个 这个值不会被更新 const
     
@@ -251,10 +263,7 @@ class GraphState(BaseModel):
     #交流会相关
     generation_count_in_meeting:int = Field(default=0) # 交流会进行的次数
     
-    
-    
-    
-    
+
     
     # 以下内容在每一次meeting后更新 随即下放到每一个岛屿 
     
@@ -266,6 +275,27 @@ class GraphState(BaseModel):
     feature_map:Annotated[Dict[str,Any],reducer_for_feature_map] = Field(default_factory=dict)
     
     islands:Annotated[Dict[str,IslandState],reducer_for_single_parameter] = Field(default_factory=dict)
+    
+    
+    
+    rag_doc_list:List[str] = Field(default_factory=list) # 用于RAG的文档存储位置 文件地址
+    rag_doc_path:str = Field(default="") # 用于RAG的文档存储位置 文件夹地址
+    
+    Documents:Dict[str,document] = Field(default_factory=dict)
+    vector_save_dir:str = Field(default="")
+    
+    
+    
+    
+    evolution_history:list[str] = Field(default_factory=list) # 演化历史 按照时间顺序
+    evolution_problems:list[str] = Field(default_factory=list) # 演化过程中出现的问题 按照时间顺序
+    evolution_progress:list[str] = Field(default_factory=list) # 演化过程中取得的进步 按照时间顺序
+    Documents_abstract:Dict[str,str] = Field(default_factory=dict) # 文档的摘要 大致记录了这个文档内部的主要内容 按照文档id存储
+    
+    
+    
+    
+    
     
 
     

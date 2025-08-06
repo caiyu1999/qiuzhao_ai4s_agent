@@ -4,6 +4,7 @@ from openevolve_graph.Config.llm_config import ModelConfig,LLMConfig
 from openevolve_graph.Config.prompt_config import PromptConfig
 from openevolve_graph.Config.evaluator_config import EvaluatorConfig
 from openevolve_graph.Config.controller_config import ControllerConfig
+from openevolve_graph.Config.rag_config import RAGConfig, EmbeddingsConfig, LLMRagConfig
 
 
 from dataclasses import dataclass,field 
@@ -21,8 +22,8 @@ class Config:
     prompt:PromptConfig = field(default_factory=PromptConfig)
     evaluator: EvaluatorConfig = field(default_factory=EvaluatorConfig)
     controller: ControllerConfig = field(default_factory=ControllerConfig)
+    rag: RAGConfig = field(default_factory=RAGConfig)
     # General settings
-    
     
     max_iterations: int = 10000
     checkpoint_interval: int = 100
@@ -71,7 +72,7 @@ class Config:
 
         # Update top-level fields
         for key, value in config_dict.items():
-            if key not in ["llm", "prompt", "island", "evaluator","controller","graph"] and hasattr(config, key):
+            if key not in ["llm", "prompt", "island", "evaluator","controller","graph","rag"] and hasattr(config, key):
                 setattr(config, key, value)
 
         # Update nested configs
@@ -109,6 +110,9 @@ class Config:
             config.prompt = PromptConfig(**config_dict["prompt"])
         if "island" in config_dict:
             config.island = IslandConfig(**config_dict["island"])
+
+        if "rag" in config_dict:
+            config.rag = RAGConfig.from_dict(config_dict["rag"])
         
        
         if config.random_seed is not None:
@@ -230,7 +234,8 @@ class Config:
             },
             "controller":{
                 "resume": self.controller.resume,
-            }
+            },
+            "rag": self.rag.to_dict()
         }
 
     def to_yaml(self, path: Union[str, Path]) -> None:
@@ -258,5 +263,5 @@ def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
 
 
 if __name__ == "__main__":
-    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/test_config.yaml")
-    print(config.to_dict())
+    config = Config.from_yaml("/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/test_config.yaml")
+    print(config)

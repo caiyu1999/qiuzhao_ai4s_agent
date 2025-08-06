@@ -22,9 +22,9 @@ def get_logger(log_dir: str, log_name: str = "openevolve.log", log_level: str = 
         )
 
     # 控制台输出
-    # console_handler = logging.StreamHandler()
-    # console_handler.setFormatter(formatter)
-    # logger.addHandler(console_handler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
     # 文件输出
     if log_dir:
@@ -40,7 +40,7 @@ def get_logger(log_dir: str, log_name: str = "openevolve.log", log_level: str = 
 
     return logger
 
-def setup_root_logger(log_dir: str = "", log_level: str = "INFO"):
+def setup_root_logger(log_dir: str = "", log_level: str = "DEBUG"):
     """
     设置根logger，确保所有子logger都能正确输出。
     这是推荐的配置方式，因为它会捕获所有logger的输出。
@@ -64,9 +64,9 @@ def setup_root_logger(log_dir: str = "", log_level: str = "INFO"):
     )
     
     # 控制台输出
-    # console_handler = logging.StreamHandler()
-    # console_handler.setFormatter(formatter)
-    # root_logger.addHandler(console_handler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
     
     # 文件输出
     if log_dir:

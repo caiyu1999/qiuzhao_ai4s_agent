@@ -116,12 +116,24 @@ def make_syntax(code:str, language:str="python") -> Syntax:
     返回:
         Syntax: 语法高亮的代码块
     """
-    # 创建语法高亮对象：Python语言，显示行号
-    logger.info(f"make_syntax called with code length: {len(code) if code else 0}, language: {language}")
-    logger.debug(f"make_syntax code preview: {code[:100] if code else 'None'}...")
-    syntax = Syntax(code, language, line_numbers=False,line_range=(0,100))
-    logger.debug(f"make_syntax created syntax object successfully")
-    return syntax
+    try:
+        syntax = Syntax(
+            code, 
+            language, 
+            line_numbers=False, 
+            word_wrap=True,  # 启用自动换行
+        )
+        return syntax
+        
+    except Exception as e:
+        logger.error(f"Error creating syntax object: {e}")
+        # 返回一个简单的语法高亮显示作为后备
+        try:
+            fallback_code = code[:500] + "..." if len(code) > 500 else code
+            return Syntax(fallback_code, language, line_numbers=False, word_wrap=True)
+        except Exception as e2:
+            logger.error(f"Fallback also failed: {e2}")
+            return Syntax("Code display error", language, line_numbers=False)
 
 
 def create_island_panel(island_data: IslandData_vis) -> Panel:
@@ -220,97 +232,97 @@ class VisualizationApp:
         self.header = Header()
         self.overall_progress = Progress(
             SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("[bold red]{task.description}"),
+            BarColumn(complete_style="red", finished_style="bright_red"),
+            TextColumn("[bold red]{task.percentage:>3.0f}%"),
         )
-        self.overall_task = self.overall_progress.add_task("Evolution Progress", total=config.max_iterations)
+        self.overall_task = self.overall_progress.add_task("[bold red]Evolution Progress[/bold red]", total=config.max_iterations)
         
         # 设置静态组件
         self.layout["header"].update(self.header)
-        self.layout["iterations_all"].update(self.overall_progress)
+        # 将进度条包装在Panel中以匹配Header风格，并填满整个区域
+        progress_panel = Panel(
+            self.overall_progress, 
+            border_style="red", 
+            style="red on black",
+            # padding=(2, 4),  # 增加内边距
+            expand=True  # 填满整个区域
+        )
+        self.layout["iterations_all"].update(progress_panel)
         
     def update_display(self):
         """更新显示内容"""
         try:
             # 获取最新的可视化数据
             if self.server is None:
-                logger.debug("Server is None, skipping display update")
                 return
             vis_data = self.server.get_vis_data()
-            logger.debug(f"Retrieved visualization data, best_program exists: {vis_data.best_program is not None}")
             
-            # 更新各个岛屿的信息面板
-            for i in range(self.config.island.num_islands):
-                island_id = str(i)
-                if island_id in vis_data.islands_data:
-                    island_data = vis_data.islands_data[island_id]
-                    island_panel = create_island_panel(island_data)
-                    self.layout[f"island_{i}"].update(island_panel)
+            try:
+                # 更新各个岛屿的信息面板
+                for i in range(self.config.island.num_islands):
+                    island_id = str(i)
+                    if island_id in vis_data.islands_data:
+                        island_data = vis_data.islands_data[island_id]
+                        island_panel = create_island_panel(island_data)
+                        self.layout[f"island_{i}"].update(island_panel)
+            except Exception as e:
+                logger.error(f"Error updating island information: {e}")
 
             # 更新最佳程序代码
-            logger.debug(f"Checking best_program for code update: best_program={vis_data.best_program is not None}")
-            if vis_data.best_program:
-                logger.debug(f"best_program exists, checking code: has_code={vis_data.best_program.code is not None}, code_length={len(vis_data.best_program.code) if vis_data.best_program.code else 0}")
-                if vis_data.best_program.code:  # 检查代码不为空且不只包含空白字符
-                    logger.info(f"visualization update best program code, code length: {len(vis_data.best_program.code)}")
+            if vis_data.best_program and vis_data.best_program.code:
+                try:
                     self.best_program_code = vis_data.best_program.code
                     code_syntax = make_syntax(self.best_program_code, "python")
                     self.layout["best_code"].update(Panel(code_syntax, title="最佳程序代码", border_style="green"))
-                    logger.debug("Successfully updated code panel")
-                else:
-                    logger.debug(f"best_program exists but has no meaningful code: code='{vis_data.best_program.code}'")
-            else:
-                logger.debug("No best_program available for code update")
+                except Exception as e:
+                    logger.error(f"Error updating best program code: {e}")
             
-            # 更新最佳程序信息
-            if vis_data.best_program and vis_data.best_program.id:
-                best_info_table = create_best_program_info(vis_data.best_program)
-                self.layout["best_information"].update(Panel(best_info_table, title="最佳程序信息", border_style="green"))
+            
+            try:
+                # 更新最佳程序信息
+                if vis_data.best_program and vis_data.best_program.id:
+                    best_info_table = create_best_program_info(vis_data.best_program)
+                    self.layout["best_information"].update(Panel(best_info_table, title="最佳程序信息", border_style="green"))
+            except Exception as e:
+                logger.error(f"Error updating best program information: {e}")
                 
-                
-            if vis_data.init_program:
-                logger.debug(f"init_program exists, checking code: has_code={vis_data.init_program.code is not None}, code_length={len(vis_data.init_program.code) if vis_data.init_program.code else 0}")
-                if vis_data.init_program.code:
-                    logger.info(f"visualization update init program code, code length: {len(vis_data.init_program.code)}")
+            try:
+                # 更新初始程序代码
+                if vis_data.init_program and vis_data.init_program.code:
                     self.init_program_code = vis_data.init_program.code
                     code_syntax = make_syntax(self.init_program_code, "python")
                     self.layout["init_code"].update(Panel(code_syntax, title="初始程序代码", border_style="green"))
-                    logger.debug("Successfully updated code panel")
-                else:
-                    logger.debug(f"init_program exists but has no meaningful code: code='{vis_data.init_program.code}'")
-            else:
-                logger.debug("No init_program available for code update")
+            except Exception as e:
+                logger.error(f"Error updating init program code: {e}")
                 
+            try:
+                # 更新初始程序信息
+                if vis_data.init_program:
+                    init_info_table = create_best_program_info(vis_data.init_program)
+                    self.layout["init_information"].update(Panel(init_info_table, title="初始程序信息", border_style="green"))
+            except Exception as e:
+                logger.error(f"Error updating init program information: {e}")
+
+            
+            try:
+                # 更新总体信息
+                overall_table = Table(show_header=False, box=None, style="dim")
+                overall_table.add_column("属性", style="cyan dim")
+                overall_table.add_column("值", style="white dim")
+                overall_table.add_row("总程序数", str(vis_data.overall_information.num_programs))
+                overall_table.add_row("会议次数", str(vis_data.overall_information.num_meetings))
+                self.layout["all_information"].update(Panel(overall_table, title="总体信息", border_style="yellow"))
                 
-                
-            if vis_data.init_program:
-                init_info_table = create_best_program_info(vis_data.init_program)
-                self.layout["init_information"].update(Panel(init_info_table, title="初始程序信息", border_style="green"))
-                
-            
-            
-            
-            
-            
-            
-            # 更新总体信息
-            overall_table = Table(show_header=False, box=None, style="dim")
-            overall_table.add_column("属性", style="cyan dim")
-            overall_table.add_column("值", style="white dim")
-            overall_table.add_row("总程序数", str(vis_data.overall_information.num_programs))
-            overall_table.add_row("会议次数", str(vis_data.overall_information.num_meetings))
-            self.layout["all_information"].update(Panel(overall_table, title="总体信息", border_style="yellow"))
-            
-            # 更新进度条
-            if vis_data.islands_data:
-                current_iteration = max(island.iterations for island in vis_data.islands_data.values()) if vis_data.islands_data else 0
-                self.overall_progress.update(self.overall_task, completed=current_iteration)
-            
+                # 更新进度条
+                if vis_data.islands_data:
+                    current_iteration = max(island.iterations for island in vis_data.islands_data.values()) if vis_data.islands_data else 0
+                    self.overall_progress.update(self.overall_task, completed=current_iteration)
+            except Exception as e:      
+                logger.error(f"Error updating overall information: {e}")
         except Exception as e:
             logger.error(f"Error updating display: {e}")
-            print(f"Error updating display: {e}")
-    
+
     def run(self):
         """运行可视化应用"""
         self.running = True

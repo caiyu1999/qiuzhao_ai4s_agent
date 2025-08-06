@@ -138,7 +138,7 @@ class visualize_data:
             num_meetings = state.generation_count_in_meeting,
         )
         
-        init_program = state.all_programs.get_program(state.init_program)
+        init_program = state.init_program
         self.init_program = best_program_vis(
             id = init_program.id,
             code = init_program.code,

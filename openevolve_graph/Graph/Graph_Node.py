@@ -169,7 +169,7 @@ class node_init_status(AsyncNode):
         logger.step("Starting node_init_status execution", node_type="node_init_status")
         
         # 验证必要的配置参数
-        logger.debug("Validating configuration parameters", 
+        logger.info("Validating configuration parameters", 
                     init_program_path=config.init_program_path,
                     evaluator_file_path=config.evalutor_file_path,
                     num_islands=config.island.num_islands)
@@ -207,7 +207,7 @@ class node_init_status(AsyncNode):
             raise
         
         language = extract_code_language(code)
-        logger.info("Code language detected", language=language)
+        logger.debug("Code language detected", language=language)
 
         # 生成唯一ID
         id = str(uuid.uuid4())
@@ -226,7 +226,7 @@ class node_init_status(AsyncNode):
             eval_result, artifact_update = await self._evaluate_program(
                 init_program_code, init_program_id, evaluation_file, state
             )
-            logger.info("Initial program evaluation completed successfully",
+            logger.debug("Initial program evaluation completed successfully",
                        program_id=init_program_id,
                        metrics=eval_result.metrics,
                        has_artifacts=bool(artifact_update))
@@ -244,7 +244,7 @@ class node_init_status(AsyncNode):
             artifact = eval_result.artifacts
             artifact.update(artifact_update) # 更新工件
             artifacts_json, artifact_dir = store_artifacts(init_program_id, artifact, state, self.config)
-            logger.info("Artifacts stored successfully",
+            logger.debug("Artifacts stored successfully",
                        program_id=init_program_id,
                        artifact_dir=artifact_dir)
         
@@ -306,10 +306,8 @@ class node_init_status(AsyncNode):
                    language=language)
         
         return {
-            "init_program":id,
-            "best_program":code,
-            "best_program_id":id,
-            "best_metrics":eval_result.metrics,
+            "init_program":init_program,
+            "best_program":best_program,
             "num_islands":num_islands,
             "archive":archive,
             "all_programs":all_programs,
@@ -325,7 +323,7 @@ class node_init_status(AsyncNode):
     def __call__(self,state:GraphState):
         logger.step("node_init_status __call__ method invoked")
         try:
-            result = self.execute(state)
+            result = asyncio.run(self.execute_async(state))
             logger.info("node_init_status __call__ method completed successfully")
             return result
         except Exception as e:
@@ -757,7 +755,7 @@ class node_evaluate(AsyncNode):
                     "update_dict":update_dict,
                     
                 })
-            
+            logger.info("node_evaluate __call__ method completed successfully",island_id=state.id)
             return update_dict
         except Exception as e:
             logger.error("node_evaluate __call__ method failed", 
@@ -1126,6 +1124,8 @@ class node_sample_parent_inspiration(SyncNode):
                     "update_dict":update_dict,
                     
                 })
+            logger.info("node_sample_parent_inspiration __call__ method completed successfully", 
+                       island_id=state.id,)
             return update_dict
         except Exception as e:
             logger.error("node_sample_parent_inspiration __call__ method failed", 
@@ -1504,6 +1504,9 @@ class node_build_prompt(SyncNode):
                     "update_dict":update_dict,
                     
                 })
+            logger.info("node_build_prompt __call__ method completed successfully", 
+                       island_id=state.id,
+                       prompt_created=bool(prompt))
             return update_dict
         except Exception as e:
             logger.error("node_build_prompt __call__ method failed", 
@@ -1603,8 +1606,7 @@ class node_build_prompt(SyncNode):
                    island_id=state.id,
                    prompt_length=len(prompt),
                    evolution_round=state.iteration,
-                   diff_based_evolution=self.config.diff_based_evolution,
-                   prompt=prompt)
+                   diff_based_evolution=self.config.diff_based_evolution)
         
         return prompt
 
@@ -1676,14 +1678,14 @@ class node_llm_generate(SyncNode):
             logger.info("LLM generation configured for rewrite-based evolution")
         self.client =  None
 
-    def _llm_generate(self,state:IslandState):
-        return self.llm.invoke(state.prompt,self.structure,self.key)
-    def execute(self,state:IslandState):
+    async def _llm_generate(self,state:IslandState):
+        return await self.llm.ainvoke(state.prompt,self.structure,self.key)
+    async def execute(self,state:IslandState):
         logger.step("Starting LLM program generation", 
                    island_id=state.id,
                    evolution_type="diff-based" if self.diff_based_evolution else "rewrite-based")
         
-        llm_response:Optional[Dict[str,Any]|None] = self._llm_generate(state)
+        llm_response:Optional[Dict[str,Any]|None] = await self._llm_generate(state)
         logger.debug("LLM response received", 
                     island_id=state.id,
                     response_type=type(llm_response),
@@ -1862,7 +1864,7 @@ class node_llm_generate(SyncNode):
         logger.step("node_llm_generate __call__ method invoked", island_id=state.id)
         
         try:
-            result = self.execute(state)
+            result = asyncio.run(self.execute(state))
             logger.info("node_llm_generate __call__ method completed successfully", 
                        island_id=state.id,
                        generation_success=result.get("llm_generate_success", False))
