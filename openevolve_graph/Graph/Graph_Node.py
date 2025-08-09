@@ -1616,6 +1616,7 @@ class node_build_prompt(SyncNode):
             rag_help_info=state.RAG_help_info,
         )
         
+        logger.warning(f"prompt: {prompt}")
         logger.info("Prompt construction completed", 
                    island_id=state.id,
                    prompt_length=len(prompt),

@@ -196,7 +196,7 @@ class IslandState(BaseModel):
     # 全部程序中的最好程序
     all_best_program:Program = Field(default_factory=Program)
     
-    RAG_help_info:Dict[str,Any] = Field(default_factory=dict) # 用于帮助生成代码的RAG信息 在ragnode后更新
+    RAG_help_info:str = Field(default="") # 用于帮助生成代码的RAG信息 在ragnode后更新
    
     
 
@@ -282,7 +282,7 @@ class GraphState(BaseModel):
     
     Documents_abstract:Dict[str,str] = Field(default_factory=dict) # 文档的摘要 大致记录了这个文档内部的主要内容 按照文档id存储
     
-    RAG_help_info:Dict[str,Any] = Field(default_factory=dict) # 用于帮助生成代码的RAG信息
+    RAG_help_info:str = Field(default="") # 用于帮助生成代码的RAG信息
     def to_dict(self)->Dict[str,Any]:
         return self.model_dump()
 

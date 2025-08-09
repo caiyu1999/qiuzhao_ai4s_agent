@@ -31,7 +31,7 @@ class document:
     vector_store_path: str = ""  # 向量存储路径
     pages: list[Any] = field(default_factory=list)  # 文档分片
     len_pages: int = 0  # 分片数量
-    vector_store: Optional[FAISS] = None  # 向量存储
+    # vector_store: Optional[FAISS] = None  # 向量存储
     RAG_config: RAGConfig = field(default_factory=RAGConfig)
     id:str = str(uuid4())# 生成一个自己的独立ID 
     vector_save_dir:str = ""
@@ -98,25 +98,24 @@ class document:
         self._extra_params[key] = value
     
     def create_vector_store(self):
+        vector_store = None
         """为文档创建向量存储"""
         if os.path.exists(self.vector_store_path):
             # 如果已存在，直接加载
-            self.vector_store = FAISS.load_local(
+            vector_store = FAISS.load_local(
                 self.vector_store_path, 
                 self.embeddings,
                 allow_dangerous_deserialization=True  # 允许加载本地文件
             )
-            print(f"已加载现有向量存储: {self.vector_store_path}")
         else:
             # 创建新的向量存储
-            self.vector_store = FAISS.from_documents(
+            vector_store = FAISS.from_documents(
                 self.pages, 
                 self.embeddings
             )
             # 保存到本地
             os.makedirs(os.path.dirname(self.vector_store_path), exist_ok=True)
-            self.vector_store.save_local(self.vector_store_path)
-            print(f"已创建并保存向量存储: {self.vector_store_path}")
+            vector_store.save_local(self.vector_store_path)
     
     def split_pages(self, pages , chunk_size:int = 500, chunk_overlap:int = 100):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -228,7 +227,6 @@ class document:
             "len_pages": self.len_pages,
             "summary": self.summary,
             "vector_store_path": self.vector_store_path,
-            "has_vector_store": self.vector_store is not None
         }
         
         

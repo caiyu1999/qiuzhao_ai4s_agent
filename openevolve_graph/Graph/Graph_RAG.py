@@ -71,7 +71,17 @@ class node_rag(SyncNode):
         '''
         
         status , GraphState =await self.check_documents(GraphState) #用于更新文档
-        print("check done")
+        if status == RAG_dir_status.DIR_NOT_EXIST:
+            logger.warning("Document directory does not exist")
+            return GraphState
+        elif status == RAG_dir_status.EMPTY:
+            logger.warning("Document directory is empty")
+            return GraphState
+        elif status == RAG_dir_status.NO_CHANGE:
+            logger.warning("Document directory is not changed")
+            return GraphState
+        
+        
         # 生成提示词 并更新raginfo
         prompt = self.generate_prompt(GraphState)
         print("prompt done",prompt)
@@ -139,11 +149,23 @@ class node_rag(SyncNode):
                         rag_help_info[result[0]['question']].append(answer['content'])#将有关信息都添加到rag_help_info中
                         
         # 更新GraphState中的RAG_help_info
-        GraphState.RAG_help_info = rag_help_info 
+        # 首先整理为str格式
+        rag_help_info_str = ""
+        for question,answers in rag_help_info.items():
+            rag_help_info_str += f"问题: {question}\n"
+            for answer in answers:
+                rag_help_info_str += f"答案: {answer}\n"
+            rag_help_info_str += "\n"
+        
+        
+        
+        
+        
+        GraphState.RAG_help_info = rag_help_info_str 
         print(rag_help_info)
         # 更新每一个岛屿中的RAG_help_info 
         for island_id,island_state in GraphState.islands.items():
-            island_state.RAG_help_info = rag_help_info
+            island_state.RAG_help_info = rag_help_info_str
         return GraphState           
     async def check_documents(self,GraphState:GraphState):
         '''
