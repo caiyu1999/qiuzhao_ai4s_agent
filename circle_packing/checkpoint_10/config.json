@@ -1,0 +1,127 @@
+allow_full_rewrites: false
+archive_size: 20
+artifact_retention_days: 30
+artifact_size_threshold: 32768
+artifacts_base_path: null
+checkpoint: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/checkpoint_106
+checkpoint_interval: 20
+cleanup_old_artifacts: true
+controller:
+  resume: true
+diff_based_evolution: ture
+enable_artifacts: false
+evaluator:
+  cascade_evaluation: true
+  cascade_thresholds:
+  - 0.5
+  - 0.75
+  llm_feedback_weight: 0.1
+  max_retries: 3
+  parallel_evaluations: 4
+  timeout: 15
+  use_llm_feedback: false
+evalutor_file_path: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py
+graph:
+  checkpoint_path: null
+  parallel_generate: true
+init_program_path: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py
+island:
+  diversity_metric: edit_distance
+  elite_selection_ratio: 0.3
+  evolution_direction: []
+  exploitation_ratio: 0.7
+  exploration_ratio: 0.2
+  feature_bins: 10
+  feature_dimensions:
+  - score
+  - complexity
+  migration_interval: 50
+  migration_rate: 0.1
+  num_islands: 4
+  population_size: 60
+  random_seed: 68
+  time_of_meeting: 2
+llm:
+  evaluator_models:
+  - api_key: sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86
+    base_url: https://api.chatanywhere.tech
+    max_tokens: 8192
+    name: gpt-4o-mini
+    random_seed: 42
+    retries: 2
+    retry_delay: 3
+    tavily_api_key: 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
+    temperature: 0.7
+    timeout: 60
+    top_p: 0.95
+    use_web: false
+    weight: 0.5
+  models:
+  - api_key: sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86
+    base_url: https://api.chatanywhere.tech
+    max_tokens: 8192
+    name: gpt-4o-mini
+    random_seed: 42
+    retries: 2
+    retry_delay: 3
+    tavily_api_key: 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
+    temperature: 0.7
+    timeout: 60
+    top_p: 0.95
+    use_web: false
+    weight: 0.5
+log_dir: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/logs
+log_level: INFO
+max_code_length: 20000
+max_iterations: 500
+prompt:
+  evaluator_system_message: evaluator_system_message
+  language: English
+  num_diverse_programs: 2
+  num_top_programs: 3
+  system_message: "You are an expert mathematician specializing in circle packing\
+    \ problems and computational geometry. Your task is to improve a constructor function\
+    \ that directly produces a specific arrangement of 26 circles in a unit square,\
+    \ maximizing the sum of their radii. The AlphaEvolve paper achieved a sum of 2.635\
+    \ for n=26.\n\nKey geometric insights:\n- Circle packings often follow hexagonal\
+    \ patterns in the densest regions\n- Maximum density for infinite circle packing\
+    \ is pi/(2*sqrt(3)) \u2248 0.9069\n- Edge effects make square container packing\
+    \ harder than infinite packing\n- Circles can be placed in layers or shells when\
+    \ confined to a square\n- Similar radius circles often form regular patterns,\
+    \ while varied radii allow better space utilization\n- Perfect symmetry may not\
+    \ yield the optimal packing due to edge effects\n\nFocus on designing an explicit\
+    \ constructor that places each circle in a specific position, rather than an iterative\
+    \ search algorithm.\n"
+  template_dir: null
+  template_variations: {}
+  use_template_stochasticity: true
+rag:
+  embeddings:
+    allowed_special:
+    - <|endoftext|>
+    - <|startoftext|>
+    api_key: sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86
+    base_url: https://api.chatanywhere.tech/v1
+    chunk_size: 1000
+    disallowed_special: []
+    max_retries: 3
+    model: text-embedding-3-small
+    retry_max_seconds: 60
+    retry_min_seconds: 1
+    skip_empty: true
+    tiktoken_enabled: true
+    timeout: 30.0
+  llm:
+    api_key: sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86
+    base_url: https://api.chatanywhere.tech/v1
+    max_tokens: 8192
+    model: gpt-4o-mini
+    temperature: 0.7
+    timeout: 60
+    top_p: 0.95
+  use_RAG: true
+rag_doc_path: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/documents
+random_seed: 42
+resume: true
+use_rag: true
+vector_save_dir: /Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/vector_store
