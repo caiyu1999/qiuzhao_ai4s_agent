@@ -32,7 +32,7 @@ class EmbeddingsConfig:
 @dataclass 
 class LLMRagConfig:
     model:str = "gpt-4o-mini"
-    api_key:str = "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
+    api_key:str = "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
     base_url:str = "https://api.chatanywhere.tech/v1"
     temperature:float = 0.7
     top_p:float = 0.95

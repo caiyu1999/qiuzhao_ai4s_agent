@@ -265,7 +265,14 @@ class node_init_status(AsyncNode):
                    program_id=init_program_id,
                    language=language,
                    generation=0)
-        
+
+        # 检查是否使用rag
+        if config.use_rag:
+            # 初始化RAG节点
+            rag_doc_path = config.rag_doc_path
+            vector_save_dir = config.vector_save_dir
+
+
         # 初始化岛屿相关数据结构
         logger.step("Initializing island data structures", num_islands=config.island.num_islands)
         island_id_list = [f"{i}" for i in range(config.island.num_islands)]
@@ -318,6 +325,8 @@ class node_init_status(AsyncNode):
             "best_program":best_program,
             "feature_map":feature_map,
             "islands":islandstate_dict,
+            "rag_doc_path":rag_doc_path,
+            "vector_save_dir":vector_save_dir,
             }
         
     def __call__(self,state:GraphState):
@@ -1589,6 +1598,10 @@ class node_build_prompt(SyncNode):
                     top_program_count=len(top_programs))
         
         logger.step("Building final prompt", island_id=state.id)
+        
+        
+        
+        
         prompt = self.prompt_sampler.build_prompt(
             current_program = current_program.code,
             parent_program = parent_code,
@@ -1600,6 +1613,7 @@ class node_build_prompt(SyncNode):
             evolution_round = state.iteration,            # 演化轮次
             diff_based_evolution = self.config.diff_based_evolution,   # 是否使用基于差异的演化
             program_artifacts = get_artifacts(state,current_program.id),  # 程序工件
+            rag_help_info=state.RAG_help_info,
         )
         
         logger.info("Prompt construction completed", 
@@ -1678,14 +1692,15 @@ class node_llm_generate(SyncNode):
             logger.info("LLM generation configured for rewrite-based evolution")
         self.client =  None
 
-    async def _llm_generate(self,state:IslandState):
-        return await self.llm.ainvoke(state.prompt,self.structure,self.key)
-    async def execute(self,state:IslandState):
+    def _llm_generate(self,state:IslandState):
+        return self.llm.invoke(state.prompt,self.structure,self.key)
+    
+    def execute(self,state:IslandState):
         logger.step("Starting LLM program generation", 
                    island_id=state.id,
                    evolution_type="diff-based" if self.diff_based_evolution else "rewrite-based")
         
-        llm_response:Optional[Dict[str,Any]|None] = await self._llm_generate(state)
+        llm_response:Optional[Dict[str,Any]|None] = self._llm_generate(state)
         logger.debug("LLM response received", 
                     island_id=state.id,
                     response_type=type(llm_response),
@@ -1864,7 +1879,7 @@ class node_llm_generate(SyncNode):
         logger.step("node_llm_generate __call__ method invoked", island_id=state.id)
         
         try:
-            result = asyncio.run(self.execute(state))
+            result = self.execute(state)
             logger.info("node_llm_generate __call__ method completed successfully", 
                        island_id=state.id,
                        generation_success=result.get("llm_generate_success", False))

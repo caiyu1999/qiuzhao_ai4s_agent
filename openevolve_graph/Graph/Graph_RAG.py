@@ -1,12 +1,9 @@
 # 这里的RAG作为一个节点 这个节点在初始化后进行 在
 # 首先 检查文件夹中的文档类型(目前只支持docx pdf csv格式)
 import asyncio 
-from typing import Optional,Any, Dict
+from typing import Optional,Any, Dict,List
 import os
-import faiss 
-from langchain_community.document_loaders import PyPDFLoader,Docx2txtLoader,CSVLoader
-from dataclasses import dataclass ,field
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from langchain_openai import OpenAIEmbeddings
 from uuid import uuid4
 from langchain_community.vectorstores import FAISS
@@ -18,17 +15,15 @@ from enum import Enum
 from openevolve_graph.Graph.RAG_document import document
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel,Field 
-
-
-
+from openevolve_graph.Config.config import Config
+import time 
+import logging 
+logger = logging.getLogger(__name__) 
 
 class RAG_output(BaseModel):
-    '''
-    第一次传给llm所返回的需要搜索的信息列表
-    '''
-    questions:list[str] = Field(description="The questions that need to be asked to the documents",default_factory=list)
-    
-
+   documents_ids:list[str] = Field(description="The ids of the documents that need to be searched",default_factory=list)
+   questions:list[str] = Field(description="The questions that need to be asked to the documents",default_factory=list)
+   
 
 
 class RAG_dir_status(Enum):
@@ -49,10 +44,6 @@ class node_rag(SyncNode):
     
     1.首先它会先检查是否更新了矢量存储 如果有新的文件在文件夹中(或者旧的文件被删除) 则会更新矢量存储库
     2.生成提示词 包含:
-        1. 曾经的代码演化历程 (简要)
-        2. 曾经的代码演化出现的错误
-        3. 曾经的代码演化的进步得益于哪些提升
-        4. 当前的最佳代码
         5. rag存储库中存储了哪些信息
         这个prompt要求llm生成它认为现在需要进行rag来获得的一些信息
     3.llm会返回它认为的需要检索的信息
@@ -62,22 +53,99 @@ class node_rag(SyncNode):
 
     '''
     def __init__(self,
-                 embeddings_config: EmbeddingsConfig,
-                 llm_config: LLMRagConfig):
-        self.embeddings_config = embeddings_config
-        self.llm_config = llm_config
+                 config:Config):
+        self.RAG_config = config.rag
+        self.embeddings_config = self.RAG_config.embeddings
+        
+        self.llm_config = self.RAG_config.llm
         self.llm = init_chat_model(**self.llm_config.to_dict())
         self.embeddings = OpenAIEmbeddings(**self.embeddings_config.to_dict())
-        self.documents = {}
+        self.llm = self.llm.with_structured_output(RAG_output)
+        self.retry_times = 3 
+        self.retry_delay = 1 
         
-    def execute(self, GraphState: GraphState):
+    async def execute(self, GraphState: GraphState):
         '''
         根据需求去文档中搜索相关信息
-        在整理格式后返回相关信息
+        在整理格式后返回相关信息 如果出错或者无返回 则不改变任何信息
         '''
-        pass
         
-    def check_documents(self,GraphState:GraphState):
+        status , GraphState =await self.check_documents(GraphState) #用于更新文档
+        print("check done")
+        # 生成提示词 并更新raginfo
+        prompt = self.generate_prompt(GraphState)
+        print("prompt done",prompt)
+        
+        
+        
+        try:
+            response = self.llm.invoke(prompt)
+            
+        except Exception as e:
+            for i in range(self.retry_times):
+                time.sleep(self.retry_delay)
+                try:
+                    response = self.llm.invoke(prompt)
+                    break
+                except Exception as e:
+                    logger.warning(f"Failed to generate prompt {e}")
+                    continue
+            if response is None or response =={}:
+                return 
+        
+        
+        print(response)
+        if response.documents_ids ==[] or response.questions ==[]:
+            return GraphState
+        
+        questions = response.questions
+        documents_ids = response.documents_ids
+        if len(documents_ids) != len(questions):
+            logger.warning("The length of documents_ids and questions is not the same")
+            return GraphState
+        
+        response ={documents_ids[i]:[] for i in range(len(questions))}
+        for i in range(len(questions)):
+            response[documents_ids[i]].append(questions[i])
+        
+        
+        
+        if prompt =={} or prompt ==None:
+            logger.warning("No questions to ask") 
+            return GraphState
+        
+        else:
+            rag_help_info = {}
+            for document_id,questions in response.items():
+                try:
+                    doc = GraphState.Documents[document_id]
+                    results:list[Any] = await asyncio.gather(*[doc.search(question) for question in questions])# 搜索得到的信息 results中的每一个元素都是list[dict] 
+                except Exception as e:
+                    logger.warning(f"Failed to search document {document_id}")
+                    continue
+                # 将结果进行整理 
+                for result in results:
+                    #result是一个搜索得到的相关信息 需要将它进行整理             
+                    # result = {
+                    #     "rank": i + 1,
+                    #     "content": doc.page_content,  # 文档内容（文本）
+                    #     "metadata": doc.metadata,     # 元数据（字典）
+                    #     "source_file": doc.metadata.get("source_file", "unknown"),
+                    #     "uuid": doc.metadata.get("uuid", "unknown")
+                    # }
+                    rag_help_info[result[0]['question']] = []
+                    for answer in result:
+                        #首先对answer的格式进行调整
+                        rag_help_info[result[0]['question']].append(answer['content'])#将有关信息都添加到rag_help_info中
+                        
+        # 更新GraphState中的RAG_help_info
+        GraphState.RAG_help_info = rag_help_info 
+        print(rag_help_info)
+        # 更新每一个岛屿中的RAG_help_info 
+        for island_id,island_state in GraphState.islands.items():
+            island_state.RAG_help_info = rag_help_info
+        return GraphState           
+    async def check_documents(self,GraphState:GraphState):
         '''
         检查文档是否更新
         如果更新了 则更新文档
@@ -100,61 +168,79 @@ class node_rag(SyncNode):
             status = RAG_dir_status.EMPTY
         else:
             status = RAG_dir_status.UPDATED
-            
-            
-            
+             
+        
         # 如果更新了文档 则要重新建立矢量存储
         if status == RAG_dir_status.UPDATED:
            # 首先检查是否删除了某些文件 如果删除了 则要删除对应的矢量存储 
             for file in file_list:
-               if file not in previous_rag_list: #此时需要添加 
-                   doc_type = file.split(".")[-1]
-                   vector_save_dir = GraphState.vector_save_dir
+                doc_type = file.split(".")[-1]
+                if doc_type not in ["pdf","docx","csv"]:
+                    continue
+                if file not in previous_rag_list: #此时需要添加 
                    
+                   
+                   vector_save_dir = GraphState.vector_save_dir
+                #    print(doc_type,"doc_type")
                    doc = document(file_path=os.path.join(doc_dir_path, file),
                                   file_type=doc_type,
                                   vector_save_dir=vector_save_dir,
-                                  embeddings_config=self.embeddings_config)
+                                  RAG_config=self.RAG_config)
                    
+                   await doc.initialize() 
                    doc_id = doc.id 
                    # 添加新的key和value
                    GraphState.Documents[doc_id] = doc 
                    # 更新新的文件的地址
                    GraphState.rag_doc_list.append(file)
+                   GraphState.Documents_abstract[doc_id] = doc.summary
+                #    print(GraphState.Documents_abstract)
+                   GraphState.vector_save_dir = doc.vector_save_dir
+                   logger.info(f"New document added: {doc_id}")
+                   
+                   
             for file in previous_rag_list:
                 if file not in file_list:# 此时需要删除
                     doc_id = GraphState.Documents[file].id
                     del GraphState.Documents[doc_id]
                     GraphState.rag_doc_list.remove(file)
+                    GraphState.Documents_abstract.pop(doc_id)
+                    logger.info(f"Document removed: {doc_id}")
         
-        return status , GraphState 
+        return status,GraphState 
     
-    def generate_prompt(self,GraphState:GraphState):
+    def generate_prompt(self, GraphState:GraphState):
         '''
-        生成提示词
+        Generate prompt
         '''
         message = ChatPromptTemplate.from_template('''
-        You are an experienced code evolution expert. According to the requirements, you need to search the documents for professional knowledge that can improve the code's performance or accuracy.
-        The evolution history of this code is as follows: {evolution_history},
-        The problems encountered during its evolution are as follows: {evolution_problem},
-        The progress made during its evolution is as follows: {evolution_progress},
-        The best code achieved during its evolution is as follows: {evolution_best_code},
-        The current information in the professional knowledge base is as follows: {Documents_abstract},
-        Please tell me what questions you think should be asked to improve the accuracy and performance of the code.
-        Please return a list, where each item is a string.
-        Example (for a certain problem):
-        ["What is the data dimension?", "What is the output value in 2020?"]
+        You are an experienced code evolution expert. Based on the following requirements, and by leveraging the content of the professional knowledge base, retrieve professional knowledge that can improve the performance or accuracy of the current code.
+        The current best program code is as follows:
+        {best_program_code}
+
+        Key information summaries of each document in the professional knowledge base are as follows:
+        {Documents_abstract}
+        
+        Please return two lists:
+        List 1: The IDs of the documents to be retrieved (one ID corresponds to one question; if you have multiple questions for the same document, add the same document ID multiple times in List 1)
+        List 2: The questions to be retrieved (one ID corresponds to one question; if you have multiple questions for the same document, add the same question multiple times in List 2)
+        
+        Note: Each document ID corresponds to a document question. If you have multiple questions for the same document, add the same document ID multiple times in List 1, and add the same question multiple times in List 2.
+    
+        Example return format (for a certain question). Note that the lengths of the two lists must be the same:
+        List 1: ["Document1", "Document2", "Document2", "Document1"]
+        List 2: ["What is the core innovation of this algorithm?", "What is the dimension of the data?", "What is the detailed process of the algorithm?", "Are there any precautions?"]
+        
+        If you do not know what to retrieve, please return two empty lists.
         ''')
-        
-        
-        
-        
-        
-        
-    
 
+        abstract = {key: value.summary for key, value in GraphState.Documents.items()}
 
-    
+        return message.invoke({
+            "best_program_code": GraphState.best_program.code,
+            "Documents_abstract": abstract
+        })
+
 
 
 if __name__ == "__main__":

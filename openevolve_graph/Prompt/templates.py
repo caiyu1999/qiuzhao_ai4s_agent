@@ -35,6 +35,10 @@ DIFF_USER_TEMPLATE = """# Current Program Information
 {current_program}
 ```
 
+#RAG help information (something may help you to generate the code)
+{rag_help_info}
+
+
 # Task
 Suggest improvements to the program that will lead to better performance on the specified metrics.
 
@@ -84,6 +88,10 @@ FULL_REWRITE_USER_TEMPLATE = """# Current Program Information
 ```{language}
 {current_program}
 ```
+
+#RAG help information (something may help you to generate the code)
+{rag_help_info}
+
 
 # Task
 Rewrite the program to improve its performance on the specified metrics.
@@ -155,6 +163,15 @@ Code to evaluate:
 ```
 """
 
+# Template for formatting RAG help information
+RAG_HELP_INFO_TEMPLATE = """
+Here is the help information for the code generation:
+{rag_help_info}
+"""
+
+
+
+
 
 # Default templates dictionary
 DEFAULT_TEMPLATES = {
@@ -168,6 +185,7 @@ DEFAULT_TEMPLATES = {
     "inspirations_section": INSPIRATIONS_SECTION_TEMPLATE,
     "inspiration_program": INSPIRATION_PROGRAM_TEMPLATE,
     "evaluation": EVALUATION_TEMPLATE,
+    "rag_help_info": RAG_HELP_INFO_TEMPLATE,
 }
 
 
@@ -222,6 +240,8 @@ BASE_INSPIRATION_PROGRAM_TEMPLATE_langchain=ChatPromptTemplate.from_messages([
 BASE_EVALUATION_TEMPLATE_langchain=ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(EVALUATION_TEMPLATE),
 ])
+
+
 
 DEFAULT_TEMPLATES_langchain={
     "system_message": BASE_SYSTEM_TEMPLATE_langchain,
@@ -302,4 +322,4 @@ class TemplateManager:
 
 if __name__ == "__main__":
     template_manager = TemplateManager()
-    print(template_manager.get_template("system_message"))
+    print(template_manager.get_template("diff_user"))

@@ -64,6 +64,7 @@ class PromptSampler_langchain:
         evolution_round: int = 0,            # 演化轮次
         diff_based_evolution: bool = True,   # 是否使用基于差异的演化
         template_key: Optional[str] = None,  # 模板键覆盖
+        rag_help_info: Optional[Dict[str, Any]] = None,  # RAG帮助信息
         program_artifacts: Optional[Dict[str, Union[str, bytes]]] = None,  # 程序工件
         **kwargs: Any,                       # 其他参数
     ) -> str:
@@ -144,6 +145,7 @@ class PromptSampler_langchain:
             "current_program": current_program,
             "language": language,
             "artifacts": artifacts_section,
+            "rag_help_info": rag_help_info,
         }).to_string()
 
         # The result of 'invoke' is a PromptValue object, which cannot be added.

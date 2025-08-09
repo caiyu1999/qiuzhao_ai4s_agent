@@ -14,7 +14,6 @@ def meeting(config:Config,
             island_states:List[IslandState],
             ):
 
-    print("进入meeting")
     # 生成meeting间隔 所有岛屿在到达间隔后会进行meeting和migration
     # migration 还没完成
     if config.random_meeting:

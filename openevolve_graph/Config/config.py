@@ -55,7 +55,11 @@ class Config:
     
     # port for visualization
     port: int = 9980 
-
+    
+    
+    use_rag:bool = False # 是否使用rag
+    rag_doc_path:str = "" # rag文档路径
+    vector_save_dir:str = ""
 
     @classmethod
     def from_yaml(cls, path: Union[str, Path]) -> "Config":
@@ -146,6 +150,9 @@ class Config:
             "enable_artifacts": self.enable_artifacts,
             "archive_size": self.archive_size,
             "checkpoint": self.checkpoint,
+            "use_rag": self.use_rag,
+            "rag_doc_path": self.rag_doc_path,
+            "vector_save_dir": self.vector_save_dir,
             # Component configurations
             "llm": {
                 "models": [

@@ -196,15 +196,10 @@ class IslandState(BaseModel):
     # 全部程序中的最好程序
     all_best_program:Program = Field(default_factory=Program)
     
+    RAG_help_info:Dict[str,Any] = Field(default_factory=dict) # 用于帮助生成代码的RAG信息 在ragnode后更新
    
     
-    
-    
-    
-    
-    
-    
-    
+
     
  
     def to_dict(self)->Dict[str,Any]:
@@ -263,6 +258,7 @@ class GraphState(BaseModel):
     #交流会相关
     generation_count_in_meeting:int = Field(default=0) # 交流会进行的次数
     
+    
 
     
     # 以下内容在每一次meeting后更新 随即下放到每一个岛屿 
@@ -281,25 +277,12 @@ class GraphState(BaseModel):
     rag_doc_list:List[str] = Field(default_factory=list) # 用于RAG的文档存储位置 文件地址
     rag_doc_path:str = Field(default="") # 用于RAG的文档存储位置 文件夹地址
     
-    Documents:Dict[str,document] = Field(default_factory=dict)
-    vector_save_dir:str = Field(default="")
+    Documents:Dict[str,document] = Field(default_factory=dict)# rag文档 里面存储了文档的id 和document对象
+    vector_save_dir:str = Field(default="") # 矢量存储地址
     
-    
-    
-    
-    evolution_history:list[str] = Field(default_factory=list) # 演化历史 按照时间顺序
-    evolution_problems:list[str] = Field(default_factory=list) # 演化过程中出现的问题 按照时间顺序
-    evolution_progress:list[str] = Field(default_factory=list) # 演化过程中取得的进步 按照时间顺序
     Documents_abstract:Dict[str,str] = Field(default_factory=dict) # 文档的摘要 大致记录了这个文档内部的主要内容 按照文档id存储
     
-    
-    
-    
-    
-    
-
-    
-
+    RAG_help_info:Dict[str,Any] = Field(default_factory=dict) # 用于帮助生成代码的RAG信息
     def to_dict(self)->Dict[str,Any]:
         return self.model_dump()
 
