@@ -104,7 +104,7 @@ def build_subgraph(island_id: str, config: Config, draw_graph: bool = False):
             image_path = os.path.dirname(config.init_program_path)
             image_path = os.path.join(image_path, f"subgraph.png")
             subgraph.get_graph().draw_mermaid_png(output_file_path=image_path)
-    
+    # subgraph.get_graph().draw_mermaid_png(output_file_path="/Users/caiyu/Desktop/langchain/openevolve_graph/subgraph.png")
     return subgraph
 
 @task
@@ -244,11 +244,14 @@ def main(dict_state: dict):
     server.init_vis_data(state_init)
     
     # 启动可视化应用
-    # vis_app = start_visualization(config, server)
-    # vis_thread = threading.Thread(target=vis_app.run, daemon=True)
-    # vis_thread.start()
-    # time.sleep(1)  # 等待可视化应用启动
+    vis_app = start_visualization(config, server)
+    vis_thread = threading.Thread(target=vis_app.run, daemon=True)
+    vis_thread.start()
+    time.sleep(1)  # 等待可视化应用启动
     
+    
+    
+    # build_subgraph('0',config)
     num_islands = config.island.num_islands
     island_graph_list = [build_subgraph(str(i), config) for i in range(num_islands)]
     
@@ -286,9 +289,7 @@ def main(dict_state: dict):
                 logger.error(f"岛屿{island_state.id}的next_meeting和now_meeting不一致,next_meeting: {island_state.next_meeting}, now_meeting: {island_state.now_meeting}")
                 raise ValueError(f"岛屿{island_state.id}的next_meeting和now_meeting不一致,next_meeting: {island_state.next_meeting}, now_meeting: {island_state.now_meeting}")
         
-        
-        
-        
+
         # 通过线程安全的方式更新可视化数据
         server.init_vis_data(main_graph_state)
         

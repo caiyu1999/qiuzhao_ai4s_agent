@@ -5,9 +5,9 @@ log_level: "INFO"
 # LLM configuration
 llm:
   models:
-    - name: "gemini-2.5-flash"
-      api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-      base_url: "https://api.chatanywhere.tech/v1"
+    - name: "gpt-4o-mini"
+      api_key: ""
+      base_url: ""
       temperature: 0.7
       top_p: 0.95
       max_tokens: 8192
@@ -17,12 +17,12 @@ llm:
       retry_delay: 3
       random_seed: 42
       use_web: false
-      tavily_api_key: "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"
+      tavily_api_key: ""
 
   evaluator_models:
     - name: "gpt-4o-mini"
-      api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-      base_url: "https://api.chatanywhere.tech/v1"
+      api_key: ""
+      base_url: ""
       temperature: 0.7
       top_p: 0.95
       max_tokens: 8192
@@ -32,7 +32,7 @@ llm:
       retry_delay: 3
       random_seed: 42
       use_web: false
-      tavily_api_key: "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"
+      tavily_api_key: ""
 
 prompt:
   system_message: |
@@ -78,8 +78,8 @@ controller:
 
 rag:
   model: "text-embedding-3-small"
-  api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-  base_url: "https://api.chatanywhere.tech/v1"
+  api_key: ""
+  base_url: ""
   chunk_size: 1000
   max_retries: 3
   timeout: 30.0
@@ -92,26 +92,27 @@ rag:
 
 llm_rag:
   model: "gpt-4o-mini"
-  api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-  base_url: "https://api.chatanywhere.tech/v1"
+  api_key: ""
+  base_url: ""
   temperature: 0.7
   top_p: 0.95
   max_tokens: 8192
   timeout: 60
 
-rag_document_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/documents"
+use_rag: true 
+rag_doc_path: "openevolve_graph/circle_packing/documents"
+vector_save_dir: "openevolve_graph/circle_packing/vector_store"
 
-use_RAG: true 
 max_iterations: 500
 checkpoint_interval: 20
 log_level: "INFO"
-log_dir: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/logs"
+log_dir: "openevolve_graph/circle_packing/logs"
 diff_based_evolution: ture  # Use full rewrites instead of diffs
 allow_full_rewrites: false    # Allow full rewrites for constructor functions
 random_seed: 42 
 max_code_length: 20000
-init_program_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py"
-evalutor_file_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py"
+init_program_path: "openevolve_graph/circle_packing/initial_program.py"
+evalutor_file_path: "openevolve_graph/circle_packing/evaluator.py"
 meeting_interval: 2
 random_meeting: true
-checkpoint: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/checkpoint_106"
+checkpoint: "openevolve_graph/circle_packing/checkpoint_106"

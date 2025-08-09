@@ -6,8 +6,8 @@ from dataclasses import dataclass , field, asdict
 @dataclass 
 class EmbeddingsConfig:
     model:str = "text-embedding-3-small"
-    api_key:str = "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-    base_url:str = "https://api.chatanywhere.tech/v1"
+    api_key:str = ""
+    base_url:str = ""
     
     chunk_size:int = 1000
     max_retries:int = 3
@@ -32,8 +32,8 @@ class EmbeddingsConfig:
 @dataclass 
 class LLMRagConfig:
     model:str = "gpt-4o-mini"
-    api_key:str = "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
-    base_url:str = "https://api.chatanywhere.tech/v1"
+    api_key:str = ""
+    base_url:str = ""
     temperature:float = 0.7
     top_p:float = 0.95
     max_tokens:int = 8192

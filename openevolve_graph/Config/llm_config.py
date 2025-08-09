@@ -10,7 +10,7 @@ class ModelConfig:
     """Configuration for LLM models"""
     name: str = "gpt-4o-mini"
     model_provider: str = "openai"
-    base_url: str = "https://api.chatanywhere.tech/v1"
+    base_url: str = ""
     system_message: str = "You are a helpful assistant."
     temperature: float = 0.7
     top_p: float = 0.95
@@ -18,11 +18,11 @@ class ModelConfig:
     timeout: int = 60
     retries: int = 3
     retry_delay: int = 5
-    api_key: str = "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
+    api_key: str = ""
     random_seed: Optional[int] = None
     weight: float = 1.0 
     use_web:bool = False
-    tavily_api_key:str = "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"
+    tavily_api_key:str = ""
     language:str = "English"
     
     
@@ -34,8 +34,8 @@ class ModelConfig:
 @dataclass 
 class LLMConfig_single:
     model:str = "gpt-4o-mini"
-    api_key:str = "sk-p99d7DFP8ICuPQj4mnKIURGGInimP8EpeSxDpBnkB2BUTVRf"
-    base_url:str = "https://api.chatanywhere.tech/v1"
+    api_key:str = ""
+    base_url:str = ""
     temperature:float = 0.7
     top_p:float = 0.95
     max_tokens:int = 8192
