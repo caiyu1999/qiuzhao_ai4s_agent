@@ -27,7 +27,6 @@ class Config:
     
     max_iterations: int = 10000
     checkpoint_interval: int = 100
-    log_level: str = "INFO"
     diff_based_evolution: bool = True
     allow_full_rewrites: bool = False
     enable_artifacts: bool = False # 是否开启工件 如果不开启 不存储工件信息
@@ -50,6 +49,7 @@ class Config:
     #graph running configuration 
     checkpoint: str = ""
     log_dir: str = ""
+    log_level: str = "INFO"
     resume: bool = True 
     resume_iteration: int = 0
     
@@ -64,7 +64,7 @@ class Config:
     @classmethod
     def from_yaml(cls, path: Union[str, Path]) -> "Config":
         """Load configuration from a YAML file"""
-        with open(path, "r") as f:
+        with open(path, "r",encoding='utf-8') as f:
             config_dict = yaml.safe_load(f)
         return cls.from_dict(config_dict)
 

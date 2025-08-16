@@ -64,9 +64,9 @@ def setup_root_logger(log_dir: str = "", log_level: str = "DEBUG"):
     )
     
     # 控制台输出
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
+    # console_handler = logging.StreamHandler()
+    # console_handler.setFormatter(formatter)
+    # root_logger.addHandler(console_handler)
     
     # 文件输出
     if log_dir:

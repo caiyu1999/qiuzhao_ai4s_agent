@@ -41,9 +41,41 @@ from openevolve_graph.Graph.meeting import meeting
 from openevolve_graph.visualization.socket_sc import SimpleServer
 from openevolve_graph.visualization.vis import start_visualization
 
+parser = argparse.ArgumentParser(
+        description="OpenEvolve Graph 程序参数配置",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
 
-logger_dir = "/Users/caiyu/Desktop/langchain/openevolve_graph/openevolve_graph/test/log"
-logger = setup_root_logger(logger_dir, "INFO")
+parser.add_argument(
+        "--config", 
+        type=str,
+        help="配置文件路径 (默认: config.yaml)",
+        default="./circle_packing/test_config.yaml"
+    )
+    
+# 如果启用检查点 则需要指定检查点路径 否则从头开始
+parser.add_argument(
+    "--checkpoint",
+    type = str,
+    help = "检查点路径"
+)
+
+
+args = parser.parse_args()
+
+config = Config.from_yaml(args.config)
+
+config.checkpoint = args.checkpoint if args.checkpoint else config.checkpoint
+
+
+test_dict = {
+    "state": GraphState(),
+    "config": config
+}
+
+# set log dir 
+logger_dir = config.log_dir
+logger = setup_root_logger(logger_dir, config.log_level)
 
 
 
@@ -244,10 +276,10 @@ def main(dict_state: dict):
     server.init_vis_data(state_init)
     
     # 启动可视化应用
-    # vis_app = start_visualization(config, server)
-    # vis_thread = threading.Thread(target=vis_app.run, daemon=True)
-    # vis_thread.start()
-    # time.sleep(1)  # 等待可视化应用启动
+    vis_app = start_visualization(config, server)
+    vis_thread = threading.Thread(target=vis_app.run, daemon=True)
+    vis_thread.start()
+    time.sleep(1)  # 等待可视化应用启动
     
     num_islands = config.island.num_islands
     island_graph_list = [build_subgraph(str(i), config) for i in range(num_islands)]
@@ -314,61 +346,7 @@ def main(dict_state: dict):
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(
-        description="OpenEvolve Graph 程序参数配置",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-
-    parser.add_argument(
-            "--config", 
-            type=str,
-            help="配置文件路径 (默认: config.yaml)",
-            default="/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/test_config.yaml"
-        )
-        
-    parser.add_argument(
-            "--iterations", 
-            type=int, 
-            help="最大迭代次数 (覆盖配置文件中的设置)",
-            
-        )
     
-    parser.add_argument(
-        "--init_program",
-        type = str,
-        help = ""
-    )
-    parser.add_argument(
-        "--checkpoint",
-        type = str,
-        help = "检查点路径"
-    )
-    
-    parser.add_argument(
-        "--evaluate_program",
-        type=str,
-        help = "评估程序路径"
-    )
-    
-    
-    args = parser.parse_args()
-    
-    
-    config = Config.from_yaml(args.config)
-    
-    config.init_program_path = args.init_program if args.init_program else config.init_program_path
-    config.evalutor_file_path = args.evaluate_program if args.evaluate_program else config.evalutor_file_path
-    
-    config.max_iterations = args.iterations if args.iterations else config.max_iterations
-    
-    config.checkpoint = args.checkpoint if args.checkpoint else config.checkpoint
-    # config.resume = True
-
-    test_dict = {
-        "state": GraphState(),
-        "config": config
-    }
-
 
     result = main.invoke(test_dict, {"recursion_limit": sys.maxsize,
                                     "configurable": {"thread_id": "1"}})

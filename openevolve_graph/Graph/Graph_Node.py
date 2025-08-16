@@ -271,6 +271,7 @@ class node_init_status(AsyncNode):
             # 初始化RAG节点
             rag_doc_path = config.rag_doc_path
             vector_save_dir = config.vector_save_dir
+        
 
 
         # 初始化岛屿相关数据结构

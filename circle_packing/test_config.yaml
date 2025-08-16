@@ -1,7 +1,5 @@
 # Configuration for circle packing constructor evolution (n=26)
-max_iterations: 100  # Increased iterations
-checkpoint_interval: 10
-log_level: "INFO"
+
 # LLM configuration
 llm:
   models:
@@ -72,10 +70,7 @@ evaluator:
 graph:
   parallel_generate: true
   checkpoint_path: ""
-
-controller:
-  resume: true 
-
+ 
 rag:
   model: "text-embedding-3-small"
   api_key: "sk-Maf9m5KxsypZQ76kF2qQ6lsqLs3PL0cm2Bs3XeOD1yl6Lk86"
@@ -99,19 +94,25 @@ llm_rag:
   max_tokens: 8192
   timeout: 60
 
-rag_document_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/documents"
+#RAG configuration
+use_rag: true
+rag_doc_path: "./circle_packing/documents"
 
-use_RAG: true 
+ 
 max_iterations: 500
 checkpoint_interval: 20
+
+#log configuration
 log_level: "INFO"
-log_dir: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/logs"
+log_dir: "./circle_packing/logs"
+
+#evolution configuration
 diff_based_evolution: ture  # Use full rewrites instead of diffs
 allow_full_rewrites: false    # Allow full rewrites for constructor functions
 random_seed: 42 
 max_code_length: 20000
-init_program_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/initial_program.py"
-evalutor_file_path: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/evaluator.py"
+init_program_path: "./circle_packing/initial_program.py"
+evalutor_file_path: "./circle_packing/evaluator.py"
 meeting_interval: 2
 random_meeting: true
-checkpoint: "/Users/caiyu/Desktop/langchain/openevolve_graph/circle_packing/checkpoint_106"
+checkpoint: ""
